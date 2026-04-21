@@ -6,7 +6,7 @@ import json
 from anthropic import AsyncAnthropic
 
 from config import Config
-from providers import anthropic_api
+from providers import get_provider
 from tools import FILE_TOOLS, execute as tool_execute
 
 # ---------------------------------------------------------------------------
@@ -73,8 +73,11 @@ async def plan(config: Config, brief: dict) -> list[dict]:
     async def _exec_tool(name: str, args: dict) -> str:
         nonlocal plan_data
         if name == "create_plan":
-            plan_data = json.loads(args["tasks"])
-            return "Plan created."
+            try:
+                plan_data = json.loads(args["tasks"])
+                return "Plan created."
+            except json.JSONDecodeError as e:
+                return f"Error: Failed to parse JSON in 'tasks'. Please ensure it's a valid JSON array of objects. Detail: {e}"
         return await tool_execute(name, args, workspace=config.workspace)
 
     messages = [
@@ -84,17 +87,30 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         }
     ]
 
-    await anthropic_api.run(
+    provider = get_provider(config.backend, "anthropic")
+    response_text = await provider(
         model=config.lead_model,
         system=PLANNING_SYSTEM,
         messages=messages,
         tools=[CREATE_PLAN_TOOL] + FILE_TOOLS,
         tool_executor=_exec_tool,
-        client=client,
         max_tokens=config.max_tokens,
     )
 
     if plan_data is None:
+        # Fallback for CLI mode where the tool call might be in the text response
+        # or the model just printed the JSON.
+        import re
+        # Look for JSON-like structure in the text
+        json_match = re.search(r"\[\s*\{.*\}\s*\]", response_text, re.DOTALL)
+        if json_match:
+            try:
+                plan_data = json.loads(json_match.group(0))
+            except json.JSONDecodeError:
+                pass
+        
+    if plan_data is None:
+        print(f"DEBUG: Lead response text: {response_text}")
         raise RuntimeError("Lead agent failed to produce a research plan.")
 
     # Persist plan
@@ -123,13 +139,13 @@ async def synthesize(config: Config) -> str:
         }
     ]
 
-    result = await anthropic_api.run(
+    provider = get_provider(config.backend, "anthropic")
+    result = await provider(
         model=config.lead_model,
         system=SYNTHESIS_SYSTEM,
         messages=messages,
         tools=FILE_TOOLS,
         tool_executor=_exec_tool,
-        client=client,
         max_tokens=config.max_tokens,
     )
 

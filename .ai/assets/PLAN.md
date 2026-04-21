@@ -127,11 +127,11 @@ Each provider module exposes an `async def run(...)` function with a tool-use lo
 
 **Subtasks:**
 
-- **1.1.1** — Verify `google-genai` SDK installation and import paths. Run `from google import genai; from google.genai import types` in a Python shell. Fix any import errors.
-- **1.1.2** — Test `GoogleSearch` grounding in isolation. Send a simple query with `types.Tool(google_search=types.GoogleSearch())` and confirm grounded results come back. Document the required env var (`GOOGLE_API_KEY` or `GEMINI_API_KEY`).
-- **1.1.3** — Test custom `FunctionDeclaration` tools alongside `GoogleSearch` in the same request. Confirm both tool types can coexist in the `tools` list. If not, restructure `to_gemini_tools()` to separate them.
-- **1.1.4** — Test the function-call loop: send a prompt that triggers a custom tool call, return a `FunctionResponse`, confirm the model continues. Verify the `function_call` attribute access pattern (`part.function_call`, `fc.name`, `fc.args`).
-- **1.1.5** — Verify the correct model ID string for Gemini 3 Flash. Update `config.py` if the actual ID differs from `"gemini-3-flash"`.
+- [x] **1.1.1** — Verify `google-genai` SDK installation and import paths. Run `from google import genai; from google.genai import types` in a Python shell. Fix any import errors.
+- [x] **1.1.2** — Test `GoogleSearch` grounding in isolation. Send a simple query with `types.Tool(google_search=types.GoogleSearch())` and confirm grounded results come back. Document the required env var (`GOOGLE_API_KEY` or `GEMINI_API_KEY`).
+- [x] **1.1.3** — Test custom `FunctionDeclaration` tools alongside `GoogleSearch` in the same request. Confirm both tool types can coexist in the `tools` list. If not, restructure `to_gemini_tools()` to separate them.
+- [x] **1.1.4** — Test the function-call loop: send a prompt that triggers a custom tool call, return a `FunctionResponse`, confirm the model continues. Verify the `function_call` attribute access pattern (`part.function_call`, `fc.name`, `fc.args`).
+- [x] **1.1.5** — Verify the correct model ID string for Gemini 3 Flash. Update `config.py` if the actual ID differs from `"gemini-3-flash"`.
 
 ---
 
@@ -143,9 +143,9 @@ Each provider module exposes an `async def run(...)` function with a tool-use lo
 
 **Subtasks:**
 
-- **1.2.1** — Run a basic tool-use round trip: send a message that triggers a tool call, return a `tool_result`, confirm the model continues. Verify `block.type == "tool_use"`, `block.id`, `block.name`, `block.input` all work as expected.
-- **1.2.2** — Test edge case: model returns text + tool_use in the same response. Confirm the loop processes tool calls and continues (doesn't return early on the text).
-- **1.2.3** — Verify model IDs `claude-sonnet-4-20250514` and `claude-opus-4-20250514` are valid. Update `config.py` if needed.
+- [ ] **1.2.1** — Run a basic tool-use round trip: send a message that triggers a tool call, return a `tool_result`, confirm the model continues. Verify `block.type == "tool_use"`, `block.id`, `block.name`, `block.input` all work as expected.
+- [ ] **1.2.2** — Test edge case: model returns text + tool_use in the same response. Confirm the loop processes tool calls and continues (doesn't return early on the text).
+- [x] **1.2.3** — Verify model IDs `claude-sonnet-4-20250514` and `claude-opus-4-20250514` are valid. Update `config.py` if needed.
 
 ---
 
@@ -216,10 +216,10 @@ Each provider module exposes an `async def run(...)` function with a tool-use lo
 
 **Subtasks:**
 
-- **2.1.1** — Add a provider selection layer. Options: (a) each agent checks `config.backend` and imports the right provider, or (b) create a factory function in `providers/__init__.py` that returns the right `run()` callable based on backend + provider name. Approach (b) is cleaner. Implement it.
-- **2.1.2** — Update `agents/receptionist.py` to support CLI mode. In CLI mode, the receptionist cannot do multi-turn conversation through the CLI (claude CLI's `-p` flag is single-turn). Options: (a) keep receptionist always on API, (b) implement a multi-prompt loop where each turn is a separate CLI invocation with conversation history serialized into the prompt. Decide and implement.
-- **2.1.3** — Update `agents/lead.py` to use the provider factory for both `plan()` and `synthesize()`. In CLI mode, the lead runs as a single prompt with tools handled by the CLI's built-in file access. The lead's prompt must instruct the CLI to write `plan.json` and `report.md` directly. Adjust prompts and parsing accordingly.
-- **2.1.4** — Update `agents/subagent.py` to use the provider factory. In CLI mode, the Gemini CLI handles search natively. The prompt must instruct it to write findings to the correct path. Adjust accordingly.
+- [x] **2.1.1** — Add a provider selection layer. Options: (a) each agent checks `config.backend` and imports the right provider, or (b) create a factory function in `providers/__init__.py` that returns the right `run()` callable based on backend + provider name. Approach (b) is cleaner. Implement it.
+- [x] **2.1.2** — Update `agents/receptionist.py` to support CLI mode. In CLI mode, the receptionist cannot do multi-turn conversation through the CLI (claude CLI's `-p` flag is single-turn). Options: (a) keep receptionist always on API, (b) implement a multi-prompt loop where each turn is a separate CLI invocation with conversation history serialized into the prompt. Decide and implement.
+- [x] **2.1.3** — Update `agents/lead.py` to use the provider factory for both `plan()` and `synthesize()`. In CLI mode, the lead runs as a single prompt with tools handled by the CLI's built-in file access. The lead's prompt must instruct the CLI to write `plan.json` and `report.md` directly. Adjust prompts and parsing accordingly.
+- [x] **2.1.4** — Update `agents/subagent.py` to use the provider factory. In CLI mode, the Gemini CLI handles search natively. The prompt must instruct it to write findings to the correct path. Adjust accordingly.
 
 ---
 
@@ -231,11 +231,11 @@ Each provider module exposes an `async def run(...)` function with a tool-use lo
 
 **Subtasks:**
 
-- **2.2.1** — Run `claude --help` and document the available flags. Verify: `-p` (print mode), `--model`, `--system-prompt`, `--output-format`, `--allowedTools`. Update the stub if flags differ.
-- **2.2.2** — Test a basic invocation: `echo "What is 2+2?" | claude -p --output-format text`. Confirm stdout contains the response.
-- **2.2.3** — Test with `--system-prompt`: verify it accepts an inline string. If it requires a file, adjust the implementation to write a temp file.
-- **2.2.4** — Test with `--allowedTools Read,Write,Edit,Glob,Grep`: confirm the CLI enables those tools and the model can use them to read/write files in the cwd.
-- **2.2.5** — Handle long system prompts: if the system prompt exceeds shell argument limits, switch to passing it via a temp file or environment variable.
+- [x] **2.2.1** — Run `claude --help` and document the available flags. Verify: `-p` (print mode), `--model`, `--system-prompt`, `--output-format`, `--allowedTools`. Update the stub if flags differ.
+- [x] **2.2.2** — Test a basic invocation: `echo "What is 2+2?" | claude -p --output-format text`. Confirm stdout contains the response.
+- [x] **2.2.3** — Test with `--system-prompt`: verify it accepts an inline string. If it requires a file, adjust the implementation to write a temp file.
+- [x] **2.2.4** — Test with `--allowedTools Read,Write,Edit,Glob,Grep`: confirm the CLI enables those tools and the model can use them to read/write files in the cwd.
+- [x] **2.2.5** — Handle long system prompts: if the system prompt exceeds shell argument limits, switch to passing it via a temp file or environment variable.
 
 ---
 
@@ -247,11 +247,11 @@ Each provider module exposes an `async def run(...)` function with a tool-use lo
 
 **Subtasks:**
 
-- **2.3.1** — Run `gemini --help` and document the available flags. Verify: model selection flag, stdin prompt support, non-interactive mode, search/tool flags.
-- **2.3.2** — Test a basic invocation: `echo "What is 2+2?" | gemini ...`. Confirm stdout output.
-- **2.3.3** — Test Google Search grounding in CLI mode: verify the CLI can perform web searches. Document the flag or configuration needed.
-- **2.3.4** — Test file access in CLI mode: verify the CLI can read/write files in its working directory. Document how this is enabled.
-- **2.3.5** — Update `gemini_cli.py` with corrected flags and patterns based on findings.
+- [x] **2.3.1** — Run `gemini --help` and document the available flags. Verify: model selection flag, stdin prompt support, non-interactive mode, search/tool flags.
+- [x] **2.3.2** — Test a basic invocation: `echo "What is 2+2?" | gemini ...`. Confirm stdout output.
+- [x] **2.3.3** — Test Google Search grounding in CLI mode: verify the CLI can perform web searches. Document the flag or configuration needed.
+- [x] **2.3.4** — Test file access in CLI mode: verify the CLI can read/write files in its working directory. Document how this is enabled.
+- [x] **2.3.5** — Update `gemini_cli.py` with corrected flags and patterns based on findings.
 
 ---
 

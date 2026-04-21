@@ -4,10 +4,8 @@ from __future__ import annotations
 import asyncio
 import json
 
-from anthropic import AsyncAnthropic
-
-from config import Config
-from providers.anthropic_api import to_anthropic_tools
+from config import Backend, Config
+from providers import get_provider
 
 SYSTEM_PROMPT = """\
 You are a research receptionist. Your role is to gather enough information \
@@ -60,7 +58,6 @@ SUBMIT_BRIEF_TOOL = {
 
 async def run(config: Config) -> dict:
     """Run the interactive receptionist intake. Returns the research brief dict."""
-    client = AsyncAnthropic()
     messages: list[dict] = []
     brief: dict | None = None
 
@@ -71,7 +68,8 @@ async def run(config: Config) -> dict:
             return "Brief submitted successfully. The research team will begin shortly."
         return f"Unknown tool: {name}"
 
-    tools = to_anthropic_tools([SUBMIT_BRIEF_TOOL])
+    # We always use the API for the interactive receptionist
+    provider = get_provider(Backend.API, "anthropic")
 
     # Get the user's initial description
     print(
@@ -82,42 +80,29 @@ async def run(config: Config) -> dict:
     messages.append({"role": "user", "content": initial_input})
 
     while brief is None:
-        response = await client.messages.create(
+        # The provider handles the tool-use loop (e.g. if the model calls submit_brief)
+        # We pass the messages list which is mutated in place.
+        response_text = await provider(
             model=config.receptionist_model,
             system=SYSTEM_PROMPT,
             messages=messages,
-            tools=tools,
+            tools=[SUBMIT_BRIEF_TOOL],
+            tool_executor=tool_executor,
             max_tokens=1024,
         )
 
-        messages.append({"role": "assistant", "content": response.content})
+        if brief is not None:
+            break
 
-        # Separate text and tool-use blocks
-        text_parts = [b.text for b in response.content if hasattr(b, "text") and b.text]
-        tool_blocks = [b for b in response.content if b.type == "tool_use"]
+        # If the model didn't call submit_brief, show its text and wait for user input
+        if response_text:
+            print(f"\nAssistant: {response_text}")
 
-        # Always print any text the model produced
-        if text_parts:
-            print(f"\nAssistant: {''.join(text_parts)}")
-
-        if tool_blocks:
-            results = []
-            for block in tool_blocks:
-                output = await tool_executor(block.name, block.input)
-                results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": output,
-                    }
-                )
-            messages.append({"role": "user", "content": results})
-        else:
-            # Wait for user input
-            user_input = await asyncio.to_thread(input, "\nYou: ")
-            if user_input.strip().lower() in ("quit", "exit", "q"):
-                raise KeyboardInterrupt("User cancelled intake.")
-            messages.append({"role": "user", "content": user_input})
+        # Wait for user input
+        user_input = await asyncio.to_thread(input, "\nYou: ")
+        if user_input.strip().lower() in ("quit", "exit", "q"):
+            raise KeyboardInterrupt("User cancelled intake.")
+        messages.append({"role": "user", "content": user_input})
 
     print("\n--- Research brief compiled ---")
     print(json.dumps(brief, indent=2))
