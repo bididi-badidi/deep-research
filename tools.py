@@ -1,4 +1,5 @@
 """Filesystem tools shared by all agents."""
+
 from __future__ import annotations
 
 import asyncio
@@ -70,7 +71,7 @@ async def execute(name: str, args: dict, workspace: Path) -> str:
                 return "Error: path escapes workspace"
             if not await asyncio.to_thread(target.is_dir):
                 return f"Error: {args['path']} is not a directory"
-            
+
             def _list():
                 entries = sorted(target.iterdir())
                 if not entries:
@@ -79,7 +80,7 @@ async def execute(name: str, args: dict, workspace: Path) -> str:
                     f"{'[dir] ' if e.is_dir() else ''}{e.relative_to(ws)}"
                     for e in entries
                 )
-            
+
             return await asyncio.to_thread(_list)
 
         return f"Error: unknown tool '{name}'"

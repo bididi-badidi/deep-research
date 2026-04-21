@@ -1,4 +1,5 @@
 """Research subagent: performs web research via Gemini with Google Search grounding."""
+
 from __future__ import annotations
 
 from config import Config
@@ -33,13 +34,12 @@ async def run(config: Config, task: dict) -> str:
     # Handle schema variations from different models
     id_ = task.get("id", "unknown")
     title = task.get("title") or task.get("name") or "Research Task"
-    objective = task.get("objective") or task.get("description") or "Perform general research."
-    hints_list = task.get("search_hints") or task.get("agent_action")
-    
-    prompt = (
-        f"# Research Task: {title}\n\n"
-        f"**Objective:** {objective}\n\n"
+    objective = (
+        task.get("objective") or task.get("description") or "Perform general research."
     )
+    hints_list = task.get("search_hints") or task.get("agent_action")
+
+    prompt = f"# Research Task: {title}\n\n**Objective:** {objective}\n\n"
     if hints_list:
         if isinstance(hints_list, list):
             hints = ", ".join(hints_list)

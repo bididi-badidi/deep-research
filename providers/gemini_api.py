@@ -1,4 +1,5 @@
 """Google Gemini API backend with Google Search grounding and tool-use loop."""
+
 from __future__ import annotations
 
 from typing import Awaitable, Callable
@@ -74,9 +75,7 @@ async def run(
         if prompt:
             contents.append(types.Content(role="user", parts=[types.Part(text=prompt)]))
     else:
-        contents = [
-            types.Content(role="user", parts=[types.Part(text=prompt)])
-        ]
+        contents = [types.Content(role="user", parts=[types.Part(text=prompt)])]
 
     while True:
         response = await client.aio.models.generate_content(

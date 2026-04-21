@@ -1,9 +1,8 @@
 """Research lead agent: plans research and synthesizes findings."""
+
 from __future__ import annotations
 
 import json
-
-from anthropic import AsyncAnthropic
 
 from config import Config
 from providers import get_provider
@@ -35,7 +34,7 @@ CREATE_PLAN_TOOL = {
         "tasks": {
             "type": "string",
             "description": (
-                'JSON array of objects. Each object has: '
+                "JSON array of objects. Each object has: "
                 '"id" (short slug), "title" (human-readable), '
                 '"objective" (detailed instructions for the subagent), '
                 '"search_hints" (array of suggested search queries).'
@@ -100,6 +99,7 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         # Fallback for CLI mode where the tool call might be in the text response
         # or the model just printed the JSON.
         import re
+
         # Look for JSON-like structure in the text
         json_match = re.search(r"\[\s*\{.*\}\s*\]", response_text, re.DOTALL)
         if json_match:
@@ -107,7 +107,7 @@ async def plan(config: Config, brief: dict) -> list[dict]:
                 plan_data = json.loads(json_match.group(0))
             except json.JSONDecodeError:
                 pass
-        
+
     if plan_data is None:
         print(f"DEBUG: Lead response text: {response_text}")
         raise RuntimeError("Lead agent failed to produce a research plan.")

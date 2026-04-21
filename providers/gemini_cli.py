@@ -1,4 +1,5 @@
 """Phase 2: Gemini CLI backend via asyncio.create_subprocess_exec."""
+
 from __future__ import annotations
 
 import asyncio
@@ -18,7 +19,9 @@ async def run(
     temp_system_file = None
 
     if system:
-        temp_system_file = tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False)
+        temp_system_file = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        )
         temp_system_file.write(system)
         temp_system_file.close()
         env["GEMINI_SYSTEM_MD"] = temp_system_file.name
@@ -26,8 +29,10 @@ async def run(
     try:
         proc = await asyncio.create_subprocess_exec(
             "gemini",
-            "-p", prompt,
-            "-m", model,
+            "-p",
+            prompt,
+            "-m",
+            model,
             "--yolo",  # Automatically approve tool usage if any
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -41,11 +46,15 @@ async def run(
         stdout, stderr = await proc.communicate()
 
         if os.environ.get("DEBUG_GEMINI_CLI"):
-            if stdout: print(f"DEBUG: STDOUT: {stdout.decode()[:200]}...")
-            if stderr: print(f"DEBUG: STDERR: {stderr.decode()}")
+            if stdout:
+                print(f"DEBUG: STDOUT: {stdout.decode()[:200]}...")
+            if stderr:
+                print(f"DEBUG: STDERR: {stderr.decode()}")
 
         if proc.returncode != 0:
-            raise RuntimeError(f"Gemini CLI error (rc={proc.returncode}): {stderr.decode()}")
+            raise RuntimeError(
+                f"Gemini CLI error (rc={proc.returncode}): {stderr.decode()}"
+            )
 
         return stdout.decode()
     finally:

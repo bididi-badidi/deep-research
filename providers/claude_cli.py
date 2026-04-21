@@ -1,4 +1,5 @@
 """Phase 2: Claude CLI backend via asyncio.create_subprocess_exec."""
+
 from __future__ import annotations
 
 import asyncio
@@ -16,8 +17,10 @@ async def run(
     cmd = [
         "claude",
         "-p",  # print mode
-        "--model", model,
-        "--output-format", "text",
+        "--model",
+        model,
+        "--output-format",
+        "text",
     ]
     if system:
         cmd.extend(["--system-prompt", system])
@@ -34,6 +37,8 @@ async def run(
     stdout, stderr = await proc.communicate(prompt.encode())
 
     if proc.returncode != 0:
-        raise RuntimeError(f"Claude CLI error (rc={proc.returncode}): {stderr.decode()}")
+        raise RuntimeError(
+            f"Claude CLI error (rc={proc.returncode}): {stderr.decode()}"
+        )
 
     return stdout.decode()

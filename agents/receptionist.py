@@ -1,4 +1,5 @@
 """Receptionist agent: gathers research requirements from the user."""
+
 from __future__ import annotations
 
 import asyncio

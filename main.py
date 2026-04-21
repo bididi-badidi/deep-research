@@ -6,6 +6,7 @@ Architecture (inspired by Anthropic's multi-agent research system):
 Phase 1: API-based   (anthropic + google-genai SDKs)
 Phase 2: CLI-based   (claude + gemini CLIs via asyncio.create_subprocess_exec)
 """
+
 from __future__ import annotations
 
 import argparse
