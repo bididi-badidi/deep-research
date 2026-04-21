@@ -1,4 +1,5 @@
 """Google Gemini API backend with Google Search grounding and tool-use loop."""
+
 from __future__ import annotations
 
 from typing import Awaitable, Callable
@@ -11,13 +12,8 @@ def to_gemini_tools(
     tools: list[dict], *, include_search: bool = True
 ) -> list[types.Tool]:
     """Convert common tool definitions to Gemini API format."""
-    result: list[types.Tool] = []
-
-    if include_search:
-        result.append(types.Tool(google_search=types.GoogleSearch()))
-
+    declarations: list[types.FunctionDeclaration] = []
     if tools:
-        declarations: list[types.FunctionDeclaration] = []
         for t in tools:
             props: dict[str, types.Schema] = {}
             for k, v in t["parameters"].items():
@@ -36,16 +32,24 @@ def to_gemini_tools(
                     ),
                 )
             )
-        result.append(types.Tool(function_declarations=declarations))
 
-    return result
+    if not include_search and not declarations:
+        return []
+
+    return [
+        types.Tool(
+            google_search=types.GoogleSearch() if include_search else None,
+            function_declarations=declarations or None,
+        )
+    ]
 
 
 async def run(
     *,
     model: str,
     system: str,
-    prompt: str,
+    prompt: str | None = None,
+    messages: list[types.Content] | None = None,
     tools: list[dict] | None = None,
     tool_executor: Callable[[str, dict], Awaitable[str]] | None = None,
     include_search: bool = True,
@@ -60,11 +64,18 @@ async def run(
     config = types.GenerateContentConfig(
         system_instruction=system,
         tools=api_tools or None,
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        tool_config=types.ToolConfig(
+            include_server_side_tool_invocations=True,
+        ),
     )
 
-    contents: list[types.Content] = [
-        types.Content(role="user", parts=[types.Part(text=prompt)])
-    ]
+    if messages:
+        contents = messages.copy()
+        if prompt:
+            contents.append(types.Content(role="user", parts=[types.Part(text=prompt)]))
+    else:
+        contents = [types.Content(role="user", parts=[types.Part(text=prompt)])]
 
     while True:
         response = await client.aio.models.generate_content(
@@ -76,7 +87,8 @@ async def run(
         candidate = response.candidates[0]
         contents.append(candidate.content)
 
-        fn_calls = [p for p in candidate.content.parts if p.function_call]
+        # Get function calls from candidate
+        fn_calls = [p.function_call for p in candidate.content.parts if p.function_call]
 
         if not fn_calls:
             text_parts = [p.text for p in candidate.content.parts if p.text]
@@ -84,15 +96,15 @@ async def run(
 
         # Execute function calls and return results
         response_parts: list[types.Part] = []
-        for part in fn_calls:
-            fc = part.function_call
+        for fc in fn_calls:
             result = await tool_executor(fc.name, dict(fc.args))
             response_parts.append(
                 types.Part(
                     function_response=types.FunctionResponse(
                         name=fc.name,
                         response={"result": result},
+                        id=getattr(fc, "id", None),
                     )
                 )
             )
-        contents.append(types.Content(role="user", parts=response_parts))
+        contents.append(types.Content(role="tool", parts=response_parts))

@@ -1,8 +1,9 @@
 """Research subagent: performs web research via Gemini with Google Search grounding."""
+
 from __future__ import annotations
 
 from config import Config
-from providers import gemini_api
+from providers import get_provider
 from tools import FILE_TOOLS, execute as tool_execute
 
 SYSTEM_PROMPT = """\
@@ -30,21 +31,30 @@ The file must include:
 
 async def run(config: Config, task: dict) -> str:
     """Execute a single research subtask. Returns the model's closing text."""
-    prompt = (
-        f"# Research Task: {task['title']}\n\n"
-        f"**Objective:** {task['objective']}\n\n"
+    # Handle schema variations from different models
+    id_ = task.get("id", "unknown")
+    title = task.get("title") or task.get("name") or "Research Task"
+    objective = (
+        task.get("objective") or task.get("description") or "Perform general research."
     )
-    if task.get("search_hints"):
-        hints = ", ".join(task["search_hints"])
-        prompt += f"**Suggested searches:** {hints}\n\n"
-    prompt += f"Write your findings to: findings/{task['id']}.md"
+    hints_list = task.get("search_hints") or task.get("agent_action")
 
-    system = SYSTEM_PROMPT.replace("{task_id}", task["id"])
+    prompt = f"# Research Task: {title}\n\n**Objective:** {objective}\n\n"
+    if hints_list:
+        if isinstance(hints_list, list):
+            hints = ", ".join(hints_list)
+        else:
+            hints = str(hints_list)
+        prompt += f"**Suggested searches:** {hints}\n\n"
+    prompt += f"Write your findings to: findings/{id_}.md"
+
+    system = SYSTEM_PROMPT.replace("{task_id}", id_)
 
     async def _exec_tool(name: str, args: dict) -> str:
         return await tool_execute(name, args, workspace=config.workspace)
 
-    return await gemini_api.run(
+    provider = get_provider(config.backend, "gemini")
+    return await provider(
         model=config.subagent_model,
         system=system,
         prompt=prompt,

@@ -1,6 +1,8 @@
 """Filesystem tools shared by all agents."""
+
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 FILE_TOOLS: list[dict] = [
@@ -53,29 +55,33 @@ async def execute(name: str, args: dict, workspace: Path) -> str:
             target = (ws / args["path"]).resolve()
             if not str(target).startswith(str(ws)):
                 return "Error: path escapes workspace"
-            return target.read_text()
+            return await asyncio.to_thread(target.read_text)
 
         if name == "write_file":
             target = (ws / args["path"]).resolve()
             if not str(target).startswith(str(ws)):
                 return "Error: path escapes workspace"
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(args["content"])
+            await asyncio.to_thread(target.parent.mkdir, parents=True, exist_ok=True)
+            await asyncio.to_thread(target.write_text, args["content"])
             return f"Written to {args['path']}"
 
         if name == "list_files":
             target = (ws / args["path"]).resolve()
             if not str(target).startswith(str(ws)):
                 return "Error: path escapes workspace"
-            if not target.is_dir():
+            if not await asyncio.to_thread(target.is_dir):
                 return f"Error: {args['path']} is not a directory"
-            entries = sorted(target.iterdir())
-            if not entries:
-                return "(empty)"
-            return "\n".join(
-                f"{'[dir] ' if e.is_dir() else ''}{e.relative_to(ws)}"
-                for e in entries
-            )
+
+            def _list():
+                entries = sorted(target.iterdir())
+                if not entries:
+                    return "(empty)"
+                return "\n".join(
+                    f"{'[dir] ' if e.is_dir() else ''}{e.relative_to(ws)}"
+                    for e in entries
+                )
+
+            return await asyncio.to_thread(_list)
 
         return f"Error: unknown tool '{name}'"
     except Exception as e:

@@ -20,7 +20,9 @@ def main():
         print(f"Error: Command failed with exit code {e.returncode}")
         sys.exit(e.returncode)
     except FileNotFoundError:
-        print("Error: 'gemini' command not found. Please ensure it's installed and in your PATH.")
+        print(
+            "Error: 'gemini' command not found. Please ensure it's installed and in your PATH."
+        )
         sys.exit(1)
 
 

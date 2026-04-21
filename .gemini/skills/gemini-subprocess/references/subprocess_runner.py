@@ -22,7 +22,9 @@ logger.addHandler(file_handler)
 
 
 # Use this function to run a gemini subprocess
-async def run_gemini_subprocess_stream(prompt: str, working_dir: str = None) -> AsyncGenerator[str, None]:
+async def run_gemini_subprocess_stream(
+    prompt: str, working_dir: str = None
+) -> AsyncGenerator[str, None]:
     """
     Executes the Gemini CLI as a subprocess and streams its output.
 
@@ -55,7 +57,9 @@ async def run_gemini_subprocess_stream(prompt: str, working_dir: str = None) -> 
         max_duration = 3600  # 1 hour timeout
 
         while True:
-            remaining_time = max_duration - (asyncio.get_running_loop().time() - start_time)
+            remaining_time = max_duration - (
+                asyncio.get_running_loop().time() - start_time
+            )
             if remaining_time <= 0:
                 logger.error("Subprocess timeout (1 hour reached). Terminating.")
                 yield "\n[Error: Process terminated due to 1-hour timeout.]\n"
@@ -63,7 +67,9 @@ async def run_gemini_subprocess_stream(prompt: str, working_dir: str = None) -> 
 
             try:
                 # Read in small chunks for responsiveness, with timeout enforced
-                chunk = await asyncio.wait_for(stream.read(1024), timeout=remaining_time)
+                chunk = await asyncio.wait_for(
+                    stream.read(1024), timeout=remaining_time
+                )
             except asyncio.TimeoutError:
                 logger.error("Subprocess timeout (1 hour reached). Terminating.")
                 yield "\n[Error: Process terminated due to 1-hour timeout.]\n"
