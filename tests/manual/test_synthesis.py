@@ -4,6 +4,7 @@ from config import Config, Backend
 from agents import lead
 from dotenv import load_dotenv
 
+
 async def test_synthesis():
     load_dotenv()
     config = Config(
@@ -20,6 +21,7 @@ async def test_synthesis():
         print(f"\nFinal report written to {report_path} ({size:,} chars)")
     else:
         print("\nWarning: report.md not found")
+
 
 if __name__ == "__main__":
     asyncio.run(test_synthesis())
