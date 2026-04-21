@@ -5,6 +5,9 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
+# Project-level references directory (read-only, not scoped to workspace).
+REFERENCES_DIR = Path(__file__).parent / "references"
+
 FILE_TOOLS: list[dict] = [
     {
         "name": "read_file",
@@ -42,6 +45,31 @@ FILE_TOOLS: list[dict] = [
             },
         },
         "required": ["path"],
+    },
+    {
+        "name": "list_references",
+        "description": (
+            "List all available reference documents (methodology guides, format templates, "
+            "framework primers, etc.). Call this first to discover what references exist "
+            "before calling read_reference."
+        ),
+        "parameters": {},
+        "required": [],
+    },
+    {
+        "name": "read_reference",
+        "description": (
+            "Read a reference document by filename (e.g. 'finer-pico-primer.md'). "
+            "Use list_references first to see what is available. Reference files are "
+            "read-only methodology guides — do not attempt to write to them."
+        ),
+        "parameters": {
+            "filename": {
+                "type": "string",
+                "description": "Filename of the reference document (basename only, e.g. 'finer-pico-primer.md')",
+            },
+        },
+        "required": ["filename"],
     },
 ]
 
@@ -82,6 +110,30 @@ async def execute(name: str, args: dict, workspace: Path) -> str:
                 )
 
             return await asyncio.to_thread(_list)
+
+        if name == "list_references":
+
+            def _list_refs():
+                if not REFERENCES_DIR.is_dir():
+                    return "No references directory found."
+                entries = sorted(REFERENCES_DIR.iterdir())
+                if not entries:
+                    return "(no reference files)"
+                return "\n".join(e.name for e in entries if e.is_file())
+
+            return await asyncio.to_thread(_list_refs)
+
+        if name == "read_reference":
+            filename = args["filename"]
+            # Reject any path traversal attempts
+            if "/" in filename or "\\" in filename or ".." in filename:
+                return "Error: filename must be a basename only, not a path."
+            target = (REFERENCES_DIR / filename).resolve()
+            if not target.is_relative_to(REFERENCES_DIR.resolve()):
+                return "Error: path escapes references directory."
+            if not target.exists():
+                return f"Error: reference '{filename}' not found. Use list_references to see available files."
+            return await asyncio.to_thread(target.read_text)
 
         return f"Error: unknown tool '{name}'"
     except Exception as e:

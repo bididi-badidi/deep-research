@@ -7,25 +7,7 @@ import json
 from config import Config, Backend
 from providers import get_provider
 from tools import FILE_TOOLS, execute as tool_execute
-
-# ---------------------------------------------------------------------------
-# Phase A: Planning
-# ---------------------------------------------------------------------------
-
-PLANNING_SYSTEM = """\
-You are the lead researcher coordinating a multi-agent research system. \
-You receive a research brief and must decompose it into concrete subtasks \
-for parallel execution by research subagents.
-
-Each subagent can:
-- Search the web via Google Search
-- Read and write files in the shared workspace
-
-Create 2-5 focused, non-overlapping subtasks. Each subtask should be \
-independent and specific enough for a single agent to complete.
-
-When your plan is ready, call the `create_plan` tool with a JSON array of tasks.
-"""
+from agents.prompts import load_prompt
 
 CREATE_PLAN_TOOL = {
     "name": "create_plan",
@@ -43,26 +25,6 @@ CREATE_PLAN_TOOL = {
     },
     "required": ["tasks"],
 }
-
-# ---------------------------------------------------------------------------
-# Phase B: Synthesis
-# ---------------------------------------------------------------------------
-
-SYNTHESIS_SYSTEM = """\
-You are the lead researcher. Your subagents have completed their research. \
-Review all findings files in the workspace/findings/ directory and produce a \
-comprehensive final report.
-
-Your report must:
-1. Synthesize findings across all subtasks into a coherent narrative.
-2. Highlight key insights, agreements, and contradictions between sources.
-3. Note gaps or areas needing further research.
-4. Be well-structured with clear sections and headings.
-5. Include source URLs where available.
-
-Write the final report to report.md using the write_file tool.
-"""
-
 
 async def plan(config: Config, brief: dict) -> list[dict]:
     """Decompose a research brief into subtasks. Returns list of task dicts."""
@@ -91,7 +53,7 @@ async def plan(config: Config, brief: dict) -> list[dict]:
     )
     provider = get_provider(config.backend, provider_name)
 
-    system_prompt = PLANNING_SYSTEM
+    system_prompt = load_prompt("lead_planning")
     if config.backend == Backend.CLI:
         system_prompt += (
             "\n\nIMPORTANT: In this environment, custom tools like `create_plan` are unavailable. "
@@ -154,7 +116,7 @@ async def synthesize(config: Config) -> str:
         except Exception as e:
             print(f"Warning: Failed to read {f}: {e}")
 
-    system_prompt = SYNTHESIS_SYSTEM
+    system_prompt = load_prompt("lead_synthesis")
     if config.backend == Backend.CLI:
         system_prompt += (
             "\n\nIMPORTANT: In this environment, you MUST output the final report "

@@ -2,8 +2,9 @@
 
 ## Current Task
 
-- [ ] Task 2.5 — Documentation and polish
-- [x] Task 2.6 — CLI-mode integration test (Next: run full pipeline in CLI mode)
+- [x] Task 2.5 — Documentation and polish
+- [x] Task 2.6 — CLI-mode integration test
+- [ ] Implement prompt injection and reference tools (`feat/inject-prompt-references`)
 
 ## Upcoming
 
