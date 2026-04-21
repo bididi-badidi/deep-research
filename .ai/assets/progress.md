@@ -1,25 +1,26 @@
-# Project Progress: Deep Research
+# Project Progress: Telegram-Gemini CLI Integration
 
 ## Current Task
 
-- [ ] Task 2.4 — CLI-mode integration test (Next: run full pipeline in CLI mode)
-- [ ] Task 2.5 — Documentation and polish
-
-## Upcoming
-
-- Phase 3 — Advanced research features (Citation agent, Iterative deepening)
+- [ ] (No active tasks. Project ready for review.)
 
 ## Project Documents
 
-- [Architecture & Plan](.ai/assets/PLAN.md)
-- [Session Notes](.ai/assets/session_notes.md)
-- [Backlog](.ai/assets/backlog.md)
-- [Task Archive](.ai/assets/task_archive.md)
+- [Architecture Overview](.ai/assets/telegram-bot-architecture.md)
+- [Session Management Plan](.ai/assets/project_plan_secretary_refactor.md)
+- [Dynamic Git Refactor Plan](.ai/assets/dynamic_git_refactor_plan.md)
+- [Session Notes & Scratchpad](.ai/assets/session_notes.md)
 
 ## Phases
 
-### [x] [Phase 1: API Backend](.ai/assets/phases/phase1_api_backend.md)
-  - 6 tasks, 20 subtasks — testing and hardening complete. Verified with end-to-end research query.
+### [x] [Phase 1: Research & Setup](.ai/assets/phases/phase1_research_setup.md)
 
-### [ ] [Phase 2: CLI Backend](.ai/assets/phases/phase2_cli_backend.md)
-  - 4 tasks, 16 subtasks — backend wiring complete. End-to-end CLI integration test (2.4) pending.
+### [x] [Phase 2: Implementation](.ai/assets/phases/phase2_implementation.md)
+
+### [x] [Phase 3: Documentation & Refinement](.ai/assets/phases/phase3_documentation_refinement.md)
+
+### [x] [Phase 4: Automated Code Review & PR Workflow](.ai/assets/phases/phase4_automated_review_and_pr.md)
+
+### [x] [Phase 5: Provider Abstraction and Multi-CLI Support](.ai/assets/phases/phase5_provider_abstraction.md)
+
+### [ ] [Phase 6: Hub-and-Spoke Architecture](.ai/assets/phases/phase6_hub_spoke_architecture.md)
