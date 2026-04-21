@@ -31,9 +31,9 @@ def load_prompt(name: str, **variables: str) -> str:
     path = _PROMPTS_DIR / f"{name}.md"
     if not path.exists():
         raise FileNotFoundError(f"Prompt file not found: {path}")
-    
+
     text = path.read_text(encoding="utf-8")
-    
+
     # Inject references
     text = _inject_references(text)
 
@@ -44,14 +44,16 @@ def load_prompt(name: str, **variables: str) -> str:
 
 def _inject_references(text: str) -> str:
     """Find a '## Reference Files' section and append the content of listed files."""
-    ref_section_match = re.search(r"## Reference Files\n\n(.*?)(?:\n\n|\Z)", text, re.DOTALL)
+    ref_section_match = re.search(
+        r"## Reference Files\n\n(.*?)(?:\n\n|\Z)", text, re.DOTALL
+    )
     if not ref_section_match:
         return text
 
     ref_list = ref_section_match.group(1)
     # Match lines like "- `references/filename.md`" or "- [title](references/filename.md)"
     ref_paths = re.findall(r"- (?:`|\[.*?\]\()references/(.*?)(?:`|\))", ref_list)
-    
+
     injected_content = []
     for ref_name in ref_paths:
         ref_path = _REFS_DIR / ref_name
@@ -65,5 +67,5 @@ def _inject_references(text: str) -> str:
     if injected_content:
         # Append injected content after the main text, before the variables formatting
         return text + "\n\n" + "\n".join(injected_content)
-    
+
     return text

@@ -26,6 +26,7 @@ CREATE_PLAN_TOOL = {
     "required": ["tasks"],
 }
 
+
 async def plan(config: Config, brief: dict) -> list[dict]:
     """Decompose a research brief into subtasks. Returns list of task dicts."""
     plan_data: list[dict] | None = None
