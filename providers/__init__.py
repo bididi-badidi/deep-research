@@ -32,9 +32,12 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                 # Anthropic API expects 'messages' list, which it mutates.
                 # If only 'prompt' is provided, we wrap it.
                 if kwargs.get("messages") is None:
-                    kwargs["messages"] = [
-                        {"role": "user", "content": kwargs.pop("prompt")}
-                    ]
+                    prompt = kwargs.pop("prompt", None)
+                    if not prompt:
+                        raise ValueError(
+                            "At least one of 'prompt' or 'messages' must be provided."
+                        )
+                    kwargs["messages"] = [{"role": "user", "content": prompt}]
                 else:
                     kwargs.pop("prompt", None)
 
@@ -58,6 +61,16 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
             from google.genai import types as genai_types
 
             async def wrapped_gemini_run(**kwargs):
+                # First pass: map tool_use_id to tool name (Anthropic format)
+                tool_names = {}
+                if kwargs.get("messages"):
+                    for msg in kwargs["messages"]:
+                        content = msg["content"]
+                        if isinstance(content, list):
+                            for item in content:
+                                if item.get("type") == "tool_use":
+                                    tool_names[item["id"]] = item["name"]
+
                 # Convert common messages format to Gemini types.Content
                 if kwargs.get("messages"):
                     api_messages = []
@@ -71,14 +84,15 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                             for item in content:
                                 if item.get("type") == "tool_result":
                                     role = "tool"
+                                    tool_id = item["tool_use_id"]
+                                    # Use mapped name or fallback to a generic one if missing
+                                    name = tool_names.get(tool_id, "unknown_tool")
                                     parts.append(
                                         genai_types.Part(
                                             function_response=genai_types.FunctionResponse(
-                                                name=item["tool_use_id"].split(":")[
-                                                    0
-                                                ],  # simple fallback
+                                                name=name,
                                                 response={"result": item["content"]},
-                                                id=item["tool_use_id"],
+                                                id=tool_id,
                                             )
                                         )
                                     )
@@ -120,6 +134,12 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                 if kwargs.get("prompt") is None and kwargs.get("messages"):
                     kwargs["prompt"] = kwargs["messages"][-1]["content"]
 
+                prompt = kwargs.get("prompt")
+                if not prompt:
+                    raise ValueError(
+                        "At least one of 'prompt' or 'messages' must be provided."
+                    )
+
                 # Map tools to allowed_tools names
                 tools = kwargs.get("tools", [])
                 allowed_tools = [t["name"] for t in tools] if tools else None
@@ -127,7 +147,7 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                 return await claude_run(
                     model=kwargs["model"],
                     system=kwargs["system"],
-                    prompt=kwargs["prompt"],
+                    prompt=prompt,
                     allowed_tools=allowed_tools,
                 )
 
@@ -141,10 +161,16 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                 if kwargs.get("prompt") is None and kwargs.get("messages"):
                     kwargs["prompt"] = kwargs["messages"][-1]["content"]
 
+                prompt = kwargs.get("prompt")
+                if not prompt:
+                    raise ValueError(
+                        "At least one of 'prompt' or 'messages' must be provided."
+                    )
+
                 return await gemini_run_cli(
                     model=kwargs["model"],
                     system=kwargs["system"],
-                    prompt=kwargs["prompt"],
+                    prompt=prompt,
                 )
 
             return wrapped_gemini_run_cli
