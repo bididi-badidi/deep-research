@@ -20,6 +20,10 @@ temp_media/
 # Logs
 logs/
 
+# Workspace output
+workspace/
+workspace_cli/
+
 # Editor and IDE
 .vscode/
 .idea/
