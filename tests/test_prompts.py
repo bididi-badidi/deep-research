@@ -1,9 +1,9 @@
 from agents.prompts import load_prompt
-import os
+
 
 def test_injection():
     print("Testing prompt injection...")
-    
+
     # Test lead_planning (has 2 references)
     print("\n--- Testing lead_planning ---")
     lead_prompt = load_prompt("lead_planning")
@@ -26,7 +26,9 @@ def test_injection():
     assert "--- REFERENCE: source-evaluation-guide.md ---" in sub_prompt
     assert "--- REFERENCE: citation-formats.md ---" in sub_prompt
     assert "test-123" in sub_prompt  # Check variable substitution
-    print("Found source-evaluation-guide and citation-formats references. Variable substitution worked.")
+    print(
+        "Found source-evaluation-guide and citation-formats references. Variable substitution worked."
+    )
 
     # Test lead_synthesis (has 3 references)
     print("\n--- Testing lead_synthesis ---")
@@ -35,9 +37,12 @@ def test_injection():
     assert "--- REFERENCE: synthesis-formats.md ---" in synth_prompt
     assert "--- REFERENCE: citation-formats.md ---" in synth_prompt
     assert "--- REFERENCE: source-evaluation-guide.md ---" in synth_prompt
-    print("Found synthesis-formats, citation-formats, and source-evaluation-guide references.")
+    print(
+        "Found synthesis-formats, citation-formats, and source-evaluation-guide references."
+    )
 
     print("\nAll injection tests passed!")
+
 
 if __name__ == "__main__":
     test_injection()
