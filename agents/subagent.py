@@ -5,28 +5,7 @@ from __future__ import annotations
 from config import Config
 from providers import get_provider
 from tools import FILE_TOOLS, execute as tool_execute
-
-SYSTEM_PROMPT = """\
-You are a research subagent. You have been assigned a specific research task.
-
-Use Google Search to find relevant, high-quality information, then write your \
-findings to a markdown file in the workspace.
-
-Guidelines:
-- Search broadly first, then drill into specifics.
-- Evaluate source quality — prefer authoritative and recent sources.
-- Record key facts, data points, and direct quotes with source URLs.
-- Note contradictions or uncertainties between sources.
-- Structure your findings clearly with headings and bullet points.
-
-Write your findings to: findings/{task_id}.md
-
-The file must include:
-- A title matching your assigned task
-- Sections for each major finding
-- Source URLs for all claims
-- A brief summary at the end
-"""
+from agents.prompts import load_prompt
 
 
 async def run(config: Config, task: dict) -> str:
@@ -48,7 +27,7 @@ async def run(config: Config, task: dict) -> str:
         prompt += f"**Suggested searches:** {hints}\n\n"
     prompt += f"Write your findings to: findings/{id_}.md"
 
-    system = SYSTEM_PROMPT.replace("{task_id}", id_)
+    system = load_prompt("subagent", task_id=id_)
 
     async def _exec_tool(name: str, args: dict) -> str:
         return await tool_execute(name, args, workspace=config.workspace)
