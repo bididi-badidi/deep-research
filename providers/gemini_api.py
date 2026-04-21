@@ -70,11 +70,15 @@ async def run(
         ),
     )
 
+    if not prompt and not messages:
+        raise ValueError("At least one of 'prompt' or 'messages' must be provided.")
+
     if messages:
         contents = messages.copy()
         if prompt:
             contents.append(types.Content(role="user", parts=[types.Part(text=prompt)]))
     else:
+        # prompt is guaranteed to be non-empty here by the check above
         contents = [types.Content(role="user", parts=[types.Part(text=prompt)])]
 
     while True:
@@ -93,6 +97,11 @@ async def run(
         if not fn_calls:
             text_parts = [p.text for p in candidate.content.parts if p.text]
             return "\n".join(text_parts)
+
+        if not tool_executor:
+            raise RuntimeError(
+                f"Model returned {len(fn_calls)} function calls but no tool_executor was provided."
+            )
 
         # Execute function calls and return results
         response_parts: list[types.Part] = []

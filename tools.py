@@ -50,25 +50,25 @@ async def execute(name: str, args: dict, workspace: Path) -> str:
     """Execute a filesystem tool within the sandboxed workspace."""
     ws = workspace.resolve()
 
+    def _safe_path(rel_path: str) -> Path:
+        target = (ws / rel_path).resolve()
+        if not target.is_relative_to(ws):
+            raise PermissionError(f"path escapes workspace: {rel_path}")
+        return target
+
     try:
         if name == "read_file":
-            target = (ws / args["path"]).resolve()
-            if not str(target).startswith(str(ws)):
-                return "Error: path escapes workspace"
+            target = _safe_path(args["path"])
             return await asyncio.to_thread(target.read_text)
 
         if name == "write_file":
-            target = (ws / args["path"]).resolve()
-            if not str(target).startswith(str(ws)):
-                return "Error: path escapes workspace"
+            target = _safe_path(args["path"])
             await asyncio.to_thread(target.parent.mkdir, parents=True, exist_ok=True)
             await asyncio.to_thread(target.write_text, args["content"])
             return f"Written to {args['path']}"
 
         if name == "list_files":
-            target = (ws / args["path"]).resolve()
-            if not str(target).startswith(str(ws)):
-                return "Error: path escapes workspace"
+            target = _safe_path(args["path"])
             if not await asyncio.to_thread(target.is_dir):
                 return f"Error: {args['path']} is not a directory"
 

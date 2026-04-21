@@ -13,10 +13,14 @@ import argparse
 import asyncio
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from config import Backend, Config
 
 
 async def main() -> None:
+    # Load .env variables before anything else
+    load_dotenv()
     parser = argparse.ArgumentParser(
         description="Deep Research - Multi-agent research system"
     )

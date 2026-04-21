@@ -12,7 +12,7 @@ dependencies = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-norecursedirs = ["tests/manual"]
+norecursedirs = ["examples", ".*", "_*", "docs", "build", "dist", "node_modules", "venv", ".venv"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 

@@ -2,8 +2,8 @@
 
 ## Current Task
 
-- [ ] Task 2.4 — CLI-mode integration test (Next: run full pipeline in CLI mode)
 - [ ] Task 2.5 — Documentation and polish
+- [ ] Task 2.6 — CLI-mode integration test (Next: run full pipeline in CLI mode)
 
 ## Upcoming
 
