@@ -86,6 +86,19 @@ Not every research question needs all categories. Select only the ones that are 
 
 ---
 
+## Available Tool Profiles for Subagents
+
+When creating each task, you MUST include a `tool_profile` field. Choose the most
+restrictive profile that still allows the subagent to complete its task.
+
+Available profiles:
+
+{tool_profiles}
+
+Default to "full" if unsure.
+
+---
+
 ## Task Manifest Format
 
 Produce the manifest before dispatching any Subagent. This is your working document.

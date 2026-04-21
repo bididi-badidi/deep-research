@@ -36,11 +36,18 @@ async def main() -> None:
         default=Path("./workspace"),
         help="Workspace directory (default: ./workspace)",
     )
+    parser.add_argument(
+        "--max-remediation-rounds",
+        type=int,
+        default=2,
+        help="Max number of iterative remediation rounds (default: 2)",
+    )
     args = parser.parse_args()
 
     config = Config(
         backend=Backend(args.backend),
         workspace=args.workspace,
+        max_remediation_rounds=args.max_remediation_rounds,
     )
     config.workspace.mkdir(parents=True, exist_ok=True)
     (config.workspace / "findings").mkdir(exist_ok=True)
@@ -79,7 +86,7 @@ async def main() -> None:
         print(f"  [{status}] {task['title']}  {detail}")
 
     # ── 4. Lead: synthesize findings into final report ──────────────────
-    print("\n--- Synthesizing findings ---")
+    print("\n--- Synthesizing findings (may trigger remediation rounds) ---")
     await lead.synthesize(config)
 
     report_path = config.workspace / "report.md"

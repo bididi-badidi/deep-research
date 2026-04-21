@@ -2,13 +2,12 @@
 
 ## Current Task
 
-- [x] Task 2.5 — Documentation and polish
-- [x] Task 2.6 — CLI-mode integration test
-- [ ] Implement prompt injection and reference tools (`feat/inject-prompt-references`)
+- [ ] Phase 3: Iterative Deepening & Dynamic Tool Assignment
+    - [ ] Task 3.8 — Testing & Verification
 
 ## Upcoming
 
-- Phase 3 — Advanced research features (Citation agent, Iterative deepening)
+- Phase 4 — [Automated Review and PR](.ai/assets/phases/phase4_automated_review_and_pr.md)
 
 ## Project Documents
 
@@ -24,3 +23,6 @@
 
 ### [x] [Phase 2: CLI Backend](.ai/assets/phases/phase2_cli_backend.md)
   - 4 tasks, 16 subtasks — CLI backend implementation, verification, and end-to-end integration complete. Verified with `main.py --backend cli`.
+
+### [ ] [Phase 3: Iterative Deepening & Dynamic Tool Assignment](.ai/assets/phases/phase3_iterative_deepening.md)
+  - 8 tasks, 35 subtasks — Implementing tool registry, iterative remediation loop, and dynamic tool profiles.

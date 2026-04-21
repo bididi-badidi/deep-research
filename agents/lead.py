@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 
 from config import Config, Backend
 from providers import get_provider
-from tools import FILE_TOOLS, execute as tool_execute
+from tools import FILE_TOOLS, list_tool_profiles, execute as tool_execute
 from agents.prompts import load_prompt
 
 CREATE_PLAN_TOOL = {
@@ -19,11 +20,38 @@ CREATE_PLAN_TOOL = {
                 "JSON array of objects. Each object has: "
                 '"id" (short slug), "title" (human-readable), '
                 '"objective" (detailed instructions for the subagent), '
-                '"search_hints" (array of suggested search queries).'
+                '"search_hints" (array of suggested search queries), '
+                '"tool_profile" (string, one of: "full", "read_only", "write_only", "search_only").'
             ),
         },
     },
     "required": ["tasks"],
+}
+
+DISPATCH_SUBAGENTS_TOOL = {
+    "name": "dispatch_subagents",
+    "description": (
+        "Dispatch additional research subagents to fill gaps in the current findings. "
+        "Use this when the current evidence is insufficient to write an honest report. "
+        "Each task follows the same schema as create_plan output. "
+        "Returns a summary of which tasks succeeded or failed."
+    ),
+    "parameters": {
+        "tasks": {
+            "type": "string",
+            "description": (
+                "JSON array of task objects. Each object has: "
+                '"id" (short slug, prefix with "R-" for remediation), '
+                '"title", "objective", "search_hints", '
+                '"tool_profile" (optional, defaults to "full").'
+            ),
+        },
+        "reason": {
+            "type": "string",
+            "description": "Brief explanation of why additional research is needed.",
+        },
+    },
+    "required": ["tasks", "reason"],
 }
 
 
@@ -54,7 +82,9 @@ async def plan(config: Config, brief: dict) -> list[dict]:
     )
     provider = get_provider(config.backend, provider_name)
 
-    system_prompt = load_prompt("lead_planning")
+    profiles_str = json.dumps(list_tool_profiles(), indent=2)
+    system_prompt = load_prompt("lead_planning").replace("{tool_profiles}", profiles_str)
+
     if config.backend == Backend.CLI:
         system_prompt += (
             "\n\nIMPORTANT: In this environment, custom tools like `create_plan` are unavailable. "
@@ -63,7 +93,8 @@ async def plan(config: Config, brief: dict) -> list[dict]:
             '1. "id" (short unique slug, e.g., "market-size"), '
             '2. "title" (human-readable title), '
             '3. "objective" (detailed research instructions), '
-            '4. "search_hints" (list of suggested search queries).'
+            '4. "search_hints" (list of suggested search queries), '
+            '5. "tool_profile" (one of: "full", "read_only", "write_only", "search_only").'
         )
 
     response_text = await provider(
@@ -81,6 +112,10 @@ async def plan(config: Config, brief: dict) -> list[dict]:
     plan_path.parent.mkdir(parents=True, exist_ok=True)
 
     if plan_data:
+        # Validate and default tool_profile
+        for task in plan_data:
+            if "tool_profile" not in task:
+                task["tool_profile"] = "full"
         plan_path.write_text(json.dumps(plan_data, indent=2))
     elif response_text:
         # Final fallback: if we still don't have plan_data, try more aggressive cleanup
@@ -92,6 +127,10 @@ async def plan(config: Config, brief: dict) -> list[dict]:
             if start != -1 and end != -1:
                 potential_json = response_text[start : end + 1]
                 plan_data = json.loads(potential_json)
+                # Validate and default tool_profile for fallback parsing too
+                for task in plan_data:
+                    if "tool_profile" not in task:
+                        task["tool_profile"] = "full"
                 plan_path.write_text(json.dumps(plan_data, indent=2))
         except (json.JSONDecodeError, ValueError):
             pass
@@ -107,17 +146,23 @@ async def synthesize(config: Config) -> str:
     """Read all findings and write a final report. Returns the model's closing text."""
 
     findings_dir = config.workspace / "findings"
-    findings_files = list(findings_dir.glob("*.md"))
 
-    findings_content = ""
-    for f in sorted(findings_files):
-        try:
-            content = f.read_text()
-            findings_content += f"\n\n--- Findings from {f.name} ---\n\n{content}"
-        except Exception as e:
-            print(f"Warning: Failed to read {f}: {e}")
+    def _read_findings():
+        files = list(findings_dir.glob("*.md"))
+        content = ""
+        for f in sorted(files):
+            try:
+                c = f.read_text()
+                content += f"\n\n--- Findings from {f.name} ---\n\n{c}"
+            except Exception as e:
+                print(f"Warning: Failed to read {f}: {e}")
+        return content
 
-    system_prompt = load_prompt("lead_synthesis")
+    findings_content = _read_findings()
+
+    system_prompt = load_prompt("lead_synthesis").replace(
+        "{max_remediation_rounds}", str(config.max_remediation_rounds)
+    )
     if config.backend == Backend.CLI:
         system_prompt += (
             "\n\nIMPORTANT: In this environment, you MUST output the final report "
@@ -125,6 +170,7 @@ async def synthesize(config: Config) -> str:
             "Python will handle writing your output to report.md."
         )
 
+    current_round = 0
     messages = [
         {
             "role": "user",
@@ -137,6 +183,47 @@ async def synthesize(config: Config) -> str:
     ]
 
     async def _exec_tool(name: str, args: dict) -> str:
+        nonlocal current_round
+        if name == "dispatch_subagents":
+            current_round += 1
+            if current_round > config.max_remediation_rounds:
+                return f"Error: Maximum remediation rounds ({config.max_remediation_rounds}) reached. Please synthesize the final report now."
+
+            try:
+                remediation_tasks = json.loads(args["tasks"])
+                reason = args["reason"]
+                print(
+                    f"\n--- Lead requesting remediation (round {current_round}/{config.max_remediation_rounds}): {reason} ---"
+                )
+
+                from agents import subagent
+
+                # Ensure every task has a tool_profile
+                for t in remediation_tasks:
+                    if "tool_profile" not in t:
+                        t["tool_profile"] = "full"
+
+                results = await asyncio.gather(
+                    *(subagent.run(config, task) for task in remediation_tasks),
+                    return_exceptions=True,
+                )
+
+                summary = []
+                for task, result in zip(remediation_tasks, results):
+                    status = "FAIL" if isinstance(result, Exception) else "done"
+                    summary.append(f"[{status}] {task['id']}: {task['title']}")
+
+                # Re-read findings to get the new data
+                new_findings = _read_findings()
+                return (
+                    f"Remediation round {current_round} complete. "
+                    f"Findings directory has been updated with new evidence.\n"
+                    f"Summary:\n" + "\n".join(summary) + "\n\n"
+                    "Updated findings content:\n" + new_findings
+                )
+            except Exception as e:
+                return f"Error during remediation: {e}"
+
         return await tool_execute(name, args, workspace=config.workspace)
 
     provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
@@ -144,11 +231,12 @@ async def synthesize(config: Config) -> str:
         config.subagent_model if config.backend == Backend.CLI else config.lead_model
     )
     provider = get_provider(config.backend, provider_name)
+
     result = await provider(
         model=model_name,
-        system=system_prompt,
+        system=system_prompt.replace("{current_round}", str(current_round)),
         messages=messages,
-        tools=FILE_TOOLS,
+        tools=[DISPATCH_SUBAGENTS_TOOL] + FILE_TOOLS,
         tool_executor=_exec_tool,
         max_tokens=config.max_tokens,
         workspace=str(config.workspace),

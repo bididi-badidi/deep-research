@@ -43,3 +43,33 @@
 ### [x] Task 2.6: CLI-mode integration test
 - **Completed:** 2026-04-21
 - **Details:** Ran `main.py --backend cli` end-to-end. Optimized Lead agent to use Gemini in CLI mode for stability with large prompts. Fixed Claude CLI hangs by switching synthesis to read-then-output text instead of subprocess tool calls. Verified full pipeline: Intake (API) -> Plan (CLI/Gemini) -> 3x Parallel Subagents (CLI/Gemini) -> Synthesis (CLI/Gemini) -> `report.md`.
+
+## Phase 3: Iterative Deepening & Dynamic Tool Assignment
+
+### [x] Task 3.1: Tool Registry
+- **Completed:** 2026-04-21
+- **Details:** Refactored `FILE_TOOLS` into individual constants in `tools.py`. Defined `TOOL_PROFILES` (`full`, `read_only`, `write_only`, `search_only`). Added `get_tools_for_profile()` and `list_tool_profiles()` for dynamic tool assignment. Verified with unit tests.
+
+### [x] Task 3.2: Inject Tool Profile Info into Lead's Planning Prompt
+- **Completed:** 2026-04-21
+- **Details:** Added `{tool_profiles}` placeholder to `prompts/lead_planning.md`. Updated `agents/lead.py` to inject profile data at runtime. Updated `CREATE_PLAN_TOOL` schema and added validation to default missing profiles to "full".
+
+### [x] Task 3.3: Subagent Respects Tool Profile
+- **Completed:** 2026-04-21
+- **Details:** Updated `agents/subagent.py` to resolve `tool_profile` from the task dictionary and fetch the corresponding tools from the registry. This ensures subagents only have access to the permissions designated by the Lead.
+
+### [x] Task 3.4: `dispatch_subagents` Tool for the Lead
+- **Completed:** 2026-04-21
+- **Details:** Implemented a new `dispatch_subagents` tool that allows the Lead agent to spawn additional research rounds during synthesis. The tool executes subagents in parallel and returns their consolidated findings to the Lead.
+
+### [x] Task 3.5: Update Synthesis Prompt for Iterative Awareness
+- **Completed:** 2026-04-21
+- **Details:** Updated `prompts/lead_synthesis.md` to document the iterative remediation process and tool usage. Refactored `agents/lead.py` to properly inject the remediation budget (current round vs. max rounds) into the system prompt.
+
+### [x] Task 3.6: Simplify `main.py` Orchestration
+- **Completed:** 2026-04-21
+- **Details:** Updated `main.py` to reflect that the Lead agent now handles iterative remediation internally. Simplified the orchestration flow and added console logging for remediation rounds.
+
+### [x] Task 3.7: Config Updates
+- **Completed:** 2026-04-21
+- **Details:** Added `max_remediation_rounds` to `Config` (default 2) and exposed it via the `--max-remediation-rounds` CLI argument in `main.py`.

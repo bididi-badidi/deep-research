@@ -23,3 +23,4 @@ class Config:
     # Limits
     max_subagents: int = 5
     max_tokens: int = 16384
+    max_remediation_rounds: int = 2
