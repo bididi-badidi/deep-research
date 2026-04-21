@@ -17,7 +17,7 @@ class Config:
 
     # Models
     receptionist_model: str = "claude-sonnet-4-6"
-    lead_model: str = "claude-sonnet-4-6"
+    lead_model: str = "claude-opus-4-6"
     subagent_model: str = "gemini-3-flash-preview"
 
     # Limits
