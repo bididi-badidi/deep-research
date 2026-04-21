@@ -26,22 +26,32 @@ async def run(
         temp_system_file.close()
         env["GEMINI_SYSTEM_MD"] = temp_system_file.name
 
+    cmd = [
+        "gemini",
+        "-p",
+        prompt,
+        "-m",
+        model,
+        "--yolo",  # Automatically approve tool usage if any
+    ]
+
+    # Add a small random delay to avoid hitting quota limits in parallel execution
+    import random
+
+    await asyncio.sleep(random.uniform(0.5, 2.0))
+
     try:
+        if os.environ.get("DEBUG_GEMINI_CLI"):
+            print(f"DEBUG: Running Gemini CLI in {workspace}")
+            print(f"DEBUG: Cmd: {' '.join(cmd)}")
+
         proc = await asyncio.create_subprocess_exec(
-            "gemini",
-            "-p",
-            prompt,
-            "-m",
-            model,
-            "--yolo",  # Automatically approve tool usage if any
+            *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=workspace,
             env=env,
         )
-        if os.environ.get("DEBUG_GEMINI_CLI"):
-            print(f"DEBUG: Running Gemini CLI in {workspace}")
-            print(f"DEBUG: Cmd: {' '.join(proc.args if hasattr(proc, 'args') else [])}")
 
         stdout, stderr = await proc.communicate()
 

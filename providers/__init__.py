@@ -19,6 +19,7 @@ class ProviderRun(Protocol):
         tool_executor: Callable[[str, dict], Awaitable[str]] | None = None,
         include_search: bool = True,
         max_tokens: int = 4096,
+        workspace: str | None = None,
     ) -> str: ...
 
 
@@ -140,15 +141,28 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                         "At least one of 'prompt' or 'messages' must be provided."
                     )
 
-                # Map tools to allowed_tools names
+                # Map tools to allowed_tools names (Claude CLI built-ins)
+                # Map: read_file -> Read, write_file -> Write, list_files -> Glob
                 tools = kwargs.get("tools", [])
-                allowed_tools = [t["name"] for t in tools] if tools else None
+                allowed_tools = []
+                for t in tools:
+                    tname = t["name"]
+                    if tname == "read_file":
+                        allowed_tools.append("Read")
+                    elif tname == "write_file":
+                        allowed_tools.append("Write")
+                    elif tname == "list_files":
+                        allowed_tools.append("Glob")
+                    elif tname in ("Read", "Write", "Glob", "Bash", "Edit", "Grep"):
+                        allowed_tools.append(tname)
+                    # Ignore custom tools like create_plan or submit_brief for CLI mode
 
                 return await claude_run(
                     model=kwargs["model"],
                     system=kwargs["system"],
                     prompt=prompt,
-                    allowed_tools=allowed_tools,
+                    workspace=kwargs.get("workspace", "./workspace"),
+                    allowed_tools=allowed_tools if allowed_tools else None,
                 )
 
             return wrapped_claude_run
@@ -171,6 +185,7 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                     model=kwargs["model"],
                     system=kwargs["system"],
                     prompt=prompt,
+                    workspace=kwargs.get("workspace", "./workspace"),
                 )
 
             return wrapped_gemini_run_cli

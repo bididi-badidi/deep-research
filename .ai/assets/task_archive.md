@@ -40,14 +40,6 @@
 - **Completed:** 2026-04-21
 - **Details:** Verified `gemini` CLI flags (`-p`, `-m`). Implemented system prompt support via `GEMINI_SYSTEM_MD` environment variable and temporary files. Added `--yolo` flag for automated tool approval.
 
-### [x] Task 2.4: Address Copilot Review Issues
+### [x] Task 2.6: CLI-mode integration test
 - **Completed:** 2026-04-21
-- **Details:** Fixed 13 issues flagged by Copilot pull request reviewer:
-  - Hardened workspace escape check in `tools.py` using `Path.is_relative_to`.
-  - Fixed input validation for `prompt` and `messages` in Gemini API and provider factory.
-  - Added `tool_executor` guards to prevent runtime crashes.
-  - Relocated manual integration scripts to `examples/` and updated `pyproject.toml`.
-  - Wired `python-dotenv` into `main.py` to support `.env` files.
-  - Aligned environment variable names in `.env.example` with SDK defaults (`ANTHROPIC_API_KEY`).
-  - Implemented tool name mapping for Gemini when converting from Anthropic `tool_result` format.
-  - Cleaned up unused `AsyncAnthropic` client in `agents/lead.py`.
+- **Details:** Ran `main.py --backend cli` end-to-end. Optimized Lead agent to use Gemini in CLI mode for stability with large prompts. Fixed Claude CLI hangs by switching synthesis to read-then-output text instead of subprocess tool calls. Verified full pipeline: Intake (API) -> Plan (CLI/Gemini) -> 3x Parallel Subagents (CLI/Gemini) -> Synthesis (CLI/Gemini) -> `report.md`.

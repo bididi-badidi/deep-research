@@ -23,6 +23,7 @@ logs/
 # Workspace output
 workspace/
 workspace_cli/
+tests/workspace_test/
 
 # Editor and IDE
 .vscode/
