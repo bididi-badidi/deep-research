@@ -2,23 +2,25 @@ import asyncio
 from pathlib import Path
 from config import Config, Backend
 from agents import lead, subagent
+from dotenv import load_dotenv
 
 
 async def test_cli_pipeline():
-    # Load env for gemini cli (if needed by the tool itself,
-    # though our provider handles its own env)
-    # The user's .env has GEMINI_API_KEY which the gemini CLI uses.
-
-    cfg = Config(backend=Backend.CLI, workspace=Path("./workspace_cli"))
+    load_dotenv()
+    # Use a specific workspace for this example
+    workspace_path = Path("./workspace_test")
+    cfg = Config(backend=Backend.CLI, workspace=workspace_path)
     cfg.workspace.mkdir(parents=True, exist_ok=True)
     (cfg.workspace / "findings").mkdir(exist_ok=True)
 
-    # Gemini 3.1 Pro is our lead now
+    # Use flash for faster testing in examples
+    cfg.subagent_model = "flash"
+
     brief = {
-        "topic": "Population of Tokyo 2026",
-        "scope": "Current population estimates for Tokyo metropolis and greater area.",
-        "questions": "What is the latest population? How does it compare to previous years?",
-        "depth": "moderate",
+        "topic": "CEO of Anthropic",
+        "scope": "Current leadership",
+        "questions": "Who is the current CEO of Anthropic? What is their background?",
+        "depth": "overview",
     }
 
     print("\n--- [CLI] Planning ---")
@@ -33,7 +35,7 @@ async def test_cli_pipeline():
 
     for task, result in zip(tasks, results):
         status = "FAIL" if isinstance(result, Exception) else "DONE"
-        task_id = task.get("id", "unknown")
+        task_id = task.get("id") or task.get("task_id") or "unknown"
         task_title = task.get("title") or task.get("name") or "Task"
         print(f"  [{status}] {task_id}: {task_title}")
         if isinstance(result, Exception):
@@ -44,8 +46,8 @@ async def test_cli_pipeline():
 
     report_path = cfg.workspace / "report.md"
     if report_path.exists():
-        print(f"\nReport written to {report_path}")
-        # print(report_path.read_text()[:500] + "...")
+        size = len(report_path.read_text())
+        print(f"\nFinal report written to {report_path} ({size:,} chars)")
     else:
         print("\nERROR: report.md not found!")
 

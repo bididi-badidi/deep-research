@@ -61,4 +61,5 @@ async def run(config: Config, task: dict) -> str:
         tools=FILE_TOOLS,
         tool_executor=_exec_tool,
         include_search=True,
+        workspace=str(config.workspace),
     )
