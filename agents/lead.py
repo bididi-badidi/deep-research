@@ -67,7 +67,6 @@ Write the final report to report.md using the write_file tool.
 
 async def plan(config: Config, brief: dict) -> list[dict]:
     """Decompose a research brief into subtasks. Returns list of task dicts."""
-    client = AsyncAnthropic()
     plan_data: list[dict] | None = None
 
     async def _exec_tool(name: str, args: dict) -> str:
@@ -123,7 +122,6 @@ async def plan(config: Config, brief: dict) -> list[dict]:
 
 async def synthesize(config: Config) -> str:
     """Read all findings and write a final report. Returns the model's closing text."""
-    client = AsyncAnthropic()
 
     async def _exec_tool(name: str, args: dict) -> str:
         return await tool_execute(name, args, workspace=config.workspace)
