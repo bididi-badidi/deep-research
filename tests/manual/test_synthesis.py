@@ -8,7 +8,7 @@ async def test_synthesis():
     load_dotenv()
     config = Config(
         backend=Backend.CLI,
-        workspace=Path("./workspace_test"),
+        workspace=Path("./tests/workspace_test"),
         lead_model="sonnet",
     )
     print("\n--- Synthesizing findings ---")
