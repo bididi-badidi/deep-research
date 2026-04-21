@@ -1,26 +1,28 @@
-# Project Progress: Telegram-Gemini CLI Integration
+# Project Progress: Deep Research
 
 ## Current Task
 
-- [ ] (No active tasks. Project ready for review.)
+- [ ] Task 1.1 — Validate and fix Gemini API integration
+- [ ] Task 1.2 — Validate and fix Anthropic API integration
+- [ ] Task 1.3 — End-to-end receptionist test
+- [ ] Task 1.4 — End-to-end lead agent test
+- [ ] Task 1.5 — End-to-end subagent test
+
+## Upcoming
+
+- Task 1.6 — Full pipeline integration test (blocked by 1.1–1.5)
 
 ## Project Documents
 
-- [Architecture Overview](.ai/assets/telegram-bot-architecture.md)
-- [Session Management Plan](.ai/assets/project_plan_secretary_refactor.md)
-- [Dynamic Git Refactor Plan](.ai/assets/dynamic_git_refactor_plan.md)
-- [Session Notes & Scratchpad](.ai/assets/session_notes.md)
+- [Architecture & Plan](.ai/assets/PLAN.md)
+- [Session Notes](.ai/assets/session_notes.md)
+- [Backlog](.ai/assets/backlog.md)
+- [Task Archive](.ai/assets/task_archive.md)
 
 ## Phases
 
-### [x] [Phase 1: Research & Setup](.ai/assets/phases/phase1_research_setup.md)
+### [ ] [Phase 1: API Backend](.ai/assets/phases/phase1_api_backend.md)
+  - 6 tasks, 20 subtasks — testing and hardening the scaffolded code
 
-### [x] [Phase 2: Implementation](.ai/assets/phases/phase2_implementation.md)
-
-### [x] [Phase 3: Documentation & Refinement](.ai/assets/phases/phase3_documentation_refinement.md)
-
-### [x] [Phase 4: Automated Code Review & PR Workflow](.ai/assets/phases/phase4_automated_review_and_pr.md)
-
-### [x] [Phase 5: Provider Abstraction and Multi-CLI Support](.ai/assets/phases/phase5_provider_abstraction.md)
-
-### [ ] [Phase 6: Hub-and-Spoke Architecture](.ai/assets/phases/phase6_hub_spoke_architecture.md)
+### [ ] [Phase 2: CLI Backend](.ai/assets/phases/phase2_cli_backend.md)
+  - 4 tasks, 16 subtasks — wiring CLI subprocess providers and integration testing
