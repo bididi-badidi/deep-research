@@ -37,13 +37,15 @@ When you complete a task or need to pause, you must prepare `.ai/assets/session_
 
 ---
 
-## 0.3 Branch-Specific Progress
+## 0.3 Branch-Specific Progress (Conflict Avoidance)
 
-For large features or complex refactors, you can maintain branch-local progress files that are not committed to the main repository.
+To prevent merge conflicts in the main `progress.md`, you MUST use branch-local progress files for granular or high-churn task tracking.
 
 1. **Location:** Store these files in `.ai/assets/branches/<branch-name>/`.
-2. **Usage:** Use this folder for granular task lists, technical research, or scratchpads that are only relevant to the current branch.
-3. **Transition:** When merging the branch, ensure any critical findings are moved to the main `progress.md` or archived in `.ai/assets/task_archive.md` before the branch folder is deleted or abandoned.
+2. **Usage:**
+   - **Main `progress.md`:** Use ONLY for high-level Phase status and major milestones.
+   - **Branch Progress:** Use for granular sub-tasks, technical logs, and active research.
+3. **Transition:** When a branch is ready for merge, summarize the outcome in the main `progress.md` and move completed granular tasks to `.ai/assets/task_archive.md`.
 
 ---
 
