@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import asyncio
@@ -76,10 +77,11 @@ def _make_config() -> Config:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _print_section(title: str):
     print(f"\n{'=' * 60}")
     print(f"  {title}")
-    print('=' * 60)
+    print("=" * 60)
 
 
 def _inject_stub_findings(workspace: Path):
@@ -101,6 +103,7 @@ def _inject_stub_findings(workspace: Path):
 # ---------------------------------------------------------------------------
 # Test cases
 # ---------------------------------------------------------------------------
+
 
 async def test_plan(config: Config) -> list[dict]:
     _print_section("PHASE 1 — lead.plan()")
@@ -137,12 +140,15 @@ async def test_synthesize(config: Config):
     assert report_path.exists(), "report.md was not written to workspace"
     assert len(result) > 100, "Synthesis output suspiciously short"
 
-    print(f"\n[PASS] synthesize() completed. report.md written ({report_path.stat().st_size} bytes).")
+    print(
+        f"\n[PASS] synthesize() completed. report.md written ({report_path.stat().st_size} bytes)."
+    )
 
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 async def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "all"

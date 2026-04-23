@@ -54,14 +54,15 @@ async def run(config: Config) -> dict:
 
     # Use the configured backend. For CLI, we use gemini (Claude CLI issues).
     provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
-    model_name = config.subagent_model if config.backend == Backend.CLI else config.receptionist_model
+    model_name = (
+        config.subagent_model
+        if config.backend == Backend.CLI
+        else config.receptionist_model
+    )
     provider = get_provider(config.backend, provider_name)
 
     # Get the user's initial description
-    print(
-        "\nDescribe what you'd like to research "
-        "(input quit to cancel):\n"
-    )
+    print("\nDescribe what you'd like to research (input quit to cancel):\n")
     initial_input = await asyncio.to_thread(input, "You: ")
     messages.append({"role": "user", "content": initial_input})
 
@@ -72,10 +73,10 @@ async def run(config: Config) -> dict:
             "Follow the normal intake checklist and present the text-format brief as usual. "
             "However, once the user explicitly CONFIRMS the brief (e.g. says 'yes', 'looks good', 'proceed'), "
             "your response MUST end with a raw JSON object (no markdown code fences) on its own line. "
-            "The JSON MUST have these exact keys: \"topic\", \"scope\", \"questions\", \"depth\", "
-            "and optionally \"output_preferences\". "
+            'The JSON MUST have these exact keys: "topic", "scope", "questions", "depth", '
+            'and optionally "output_preferences". '
             "Example of the required JSON suffix:\n"
-            "{\"topic\": \"...\", \"scope\": \"...\", \"questions\": \"1. ...\", \"depth\": \"moderate\"}\n"
+            '{"topic": "...", "scope": "...", "questions": "1. ...", "depth": "moderate"}\n'
             "Do NOT omit the JSON when the user confirms. The pipeline cannot proceed without it."
         )
 
@@ -102,7 +103,9 @@ async def run(config: Config) -> dict:
             parsed = extract_json(response_text)
             if isinstance(parsed, dict) and "topic" in parsed:
                 print(f"\nAssistant: {response_text}")
-                print("\n[receptionist] Brief JSON detected in response — handing off to lead.")
+                print(
+                    "\n[receptionist] Brief JSON detected in response — handing off to lead."
+                )
                 brief = parsed
                 break
 

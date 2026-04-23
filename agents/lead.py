@@ -64,7 +64,10 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         nonlocal plan_data
         if name == "create_plan":
             try:
-                parsed = extract_json_or_raise(args["tasks"], "Error: Failed to parse JSON in 'tasks'. Please ensure it's a valid JSON array of objects.")
+                parsed = extract_json_or_raise(
+                    args["tasks"],
+                    "Error: Failed to parse JSON in 'tasks'. Please ensure it's a valid JSON array of objects.",
+                )
                 if isinstance(parsed, list):
                     plan_data = parsed
                     return "Plan created."
@@ -88,7 +91,9 @@ async def plan(config: Config, brief: dict) -> list[dict]:
     provider = get_provider(config.backend, provider_name)
 
     profiles_str = json.dumps(list_tool_profiles(), indent=2)
-    system_prompt = load_prompt("lead_planning").replace("{tool_profiles}", profiles_str)
+    system_prompt = load_prompt("lead_planning").replace(
+        "{tool_profiles}", profiles_str
+    )
 
     if config.backend == Backend.CLI:
         system_prompt += (
@@ -199,10 +204,13 @@ async def synthesize(config: Config) -> str:
                 return f"Error: Maximum remediation rounds ({config.max_remediation_rounds}) reached. Please synthesize the final report now."
 
             try:
-                remediation_tasks = extract_json_or_raise(args["tasks"], "Error: 'tasks' must be a JSON array of task objects.")
+                remediation_tasks = extract_json_or_raise(
+                    args["tasks"],
+                    "Error: 'tasks' must be a JSON array of task objects.",
+                )
                 if not isinstance(remediation_tasks, list):
                     return "Error: 'tasks' must be a JSON array of task objects."
-                
+
                 reason = args["reason"]
                 print(
                     f"\n--- Lead requesting remediation (round {current_round}/{config.max_remediation_rounds}): {reason} ---"
@@ -266,13 +274,15 @@ async def synthesize(config: Config) -> str:
                     print(
                         f"\n--- Max remediation rounds ({config.max_remediation_rounds}) reached. Forcing final report. ---"
                     )
-                    messages.append({
-                        "role": "user",
-                        "content": (
-                            f"Maximum remediation rounds ({config.max_remediation_rounds}) reached. "
-                            "You MUST now write the final report in markdown format using the available findings."
-                        ),
-                    })
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Maximum remediation rounds ({config.max_remediation_rounds}) reached. "
+                                "You MUST now write the final report in markdown format using the available findings."
+                            ),
+                        }
+                    )
                     result = await provider(
                         model=model_name,
                         system=system_prompt,
@@ -315,15 +325,17 @@ async def synthesize(config: Config) -> str:
                 # Discard accumulated history to prevent O(n²) context growth.
                 # Each new round gets a fresh prompt with the full updated findings.
                 messages[1:] = []
-                messages.append({
-                    "role": "user",
-                    "content": (
-                        f"Remediation round {current_round} complete.\n"
-                        f"Summary:\n" + "\n".join(summary) + "\n\n"
-                        f"Updated findings:\n{new_findings}\n\n"
-                        "Please now synthesize the final report, or request more research if still insufficient."
-                    ),
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Remediation round {current_round} complete.\n"
+                            f"Summary:\n" + "\n".join(summary) + "\n\n"
+                            f"Updated findings:\n{new_findings}\n\n"
+                            "Please now synthesize the final report, or request more research if still insufficient."
+                        ),
+                    }
+                )
             else:
                 # Model output markdown — we're done
                 break

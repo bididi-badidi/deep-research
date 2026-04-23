@@ -26,7 +26,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 
 # Make project root importable regardless of invocation directory.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -84,6 +84,7 @@ def _assert_brief(brief: dict, label: str = ""):
 # TC-1: Single-turn rich input
 # ---------------------------------------------------------------------------
 
+
 async def tc1_single_turn_rich_input(config: Config):
     """User provides a complete, detailed request in the first message.
 
@@ -116,8 +117,9 @@ async def tc1_single_turn_rich_input(config: Config):
         brief = await receptionist.run(config)
 
     _assert_brief(brief, "TC-1")
-    assert "bitcoin" in brief["topic"].lower() or "mining" in brief["topic"].lower(), \
+    assert "bitcoin" in brief["topic"].lower() or "mining" in brief["topic"].lower(), (
         "TC-1: expected topic to mention Bitcoin or mining"
+    )
     print("\n[PASS] TC-1 — Single-turn rich input")
     return brief
 
@@ -125,6 +127,7 @@ async def tc1_single_turn_rich_input(config: Config):
 # ---------------------------------------------------------------------------
 # TC-2: Multi-turn clarification
 # ---------------------------------------------------------------------------
+
 
 async def tc2_multi_turn_clarification(config: Config):
     """User starts vague; the receptionist must ask follow-up questions.
@@ -155,7 +158,9 @@ async def tc2_multi_turn_clarification(config: Config):
         brief = await receptionist.run(config)
 
     _assert_brief(brief, "TC-2")
-    assert "quantum" in brief["topic"].lower(), "TC-2: expected topic to mention quantum"
+    assert "quantum" in brief["topic"].lower(), (
+        "TC-2: expected topic to mention quantum"
+    )
     print("\n[PASS] TC-2 — Multi-turn clarification")
     return brief
 
@@ -163,6 +168,7 @@ async def tc2_multi_turn_clarification(config: Config):
 # ---------------------------------------------------------------------------
 # TC-3: Explicit confirmation gate
 # ---------------------------------------------------------------------------
+
 
 async def tc3_explicit_confirmation(config: Config):
     """Verifies that the receptionist does NOT submit the brief until
@@ -195,8 +201,9 @@ async def tc3_explicit_confirmation(config: Config):
 
     _assert_brief(brief, "TC-3")
     # After the change request, depth should be "deep"
-    assert brief.get("depth", "").lower() == "deep", \
+    assert brief.get("depth", "").lower() == "deep", (
         f"TC-3: expected depth='deep', got '{brief.get('depth')}'"
+    )
     print("\n[PASS] TC-3 — Explicit confirmation gate")
     return brief
 
@@ -204,6 +211,7 @@ async def tc3_explicit_confirmation(config: Config):
 # ---------------------------------------------------------------------------
 # TC-4: Quit / cancel mid-intake
 # ---------------------------------------------------------------------------
+
 
 async def tc4_quit_cancels_intake(config: Config):
     """User types 'quit' mid-conversation; KeyboardInterrupt must be raised."""
@@ -228,6 +236,7 @@ async def tc4_quit_cancels_intake(config: Config):
 # ---------------------------------------------------------------------------
 # TC-5: Receptionist brief → lead.plan() integration
 # ---------------------------------------------------------------------------
+
 
 async def tc5_brief_to_lead_plan(config: Config):
     """End-to-end: receptionist collects a brief → brief feeds lead.plan().
@@ -340,7 +349,7 @@ async def main():
 
     if not keep_workspace and not failed:
         _teardown()
-        print(f"\nWorkspace cleaned up.")
+        print("\nWorkspace cleaned up.")
     else:
         print(f"\nWorkspace preserved at: {WORKSPACE.resolve()}")
         print("Run `rm -rf workspace_receptionist_test` to clean up.")

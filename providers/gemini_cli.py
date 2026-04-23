@@ -14,7 +14,7 @@ async def run(
     prompt: str,
     workspace: str = "./workspace",
     approval_mode: str = "auto_edit",
-    cli_session_id: str | None = None
+    cli_session_id: str | None = None,
 ) -> str:
     """Run a prompt through the Gemini CLI."""
     env = os.environ.copy()

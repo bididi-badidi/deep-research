@@ -1,4 +1,3 @@
-import pytest
 from utils import extract_json
 
 
@@ -9,7 +8,7 @@ def test_extract_json_direct():
 
 def test_extract_json_markdown():
     data = [{"id": "task1"}]
-    text = "Here is the plan:\n```json\n[{\"id\": \"task1\"}]\n```\nHope it helps."
+    text = 'Here is the plan:\n```json\n[{"id": "task1"}]\n```\nHope it helps.'
     assert extract_json(text) == data
 
 
@@ -21,7 +20,7 @@ def test_extract_json_conversational_array():
 
 def test_extract_json_nested_delimiters():
     data = {"outer": {"inner": [1, 2]}}
-    text = "Results: {\"outer\": {\"inner\": [1, 2]}} end."
+    text = 'Results: {"outer": {"inner": [1, 2]}} end.'
     assert extract_json(text) == data
 
 

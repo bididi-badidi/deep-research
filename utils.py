@@ -6,18 +6,20 @@ from typing import Any
 
 def get_project_name(path: str | Path | None = None) -> str:
     """Get the Gemini CLI project name from a directory path.
-    
+
     By default, uses the current working directory's name.
     """
     if path is None:
         path = Path.cwd()
     else:
         path = Path(path).resolve()
-    
+
     return path.name
 
 
-def get_session_id_by_prompt(project_name: str, prompt_prefix: str, n: int = 50) -> str | None:
+def get_session_id_by_prompt(
+    project_name: str, prompt_prefix: str, n: int = 50
+) -> str | None:
     """Extract a session ID from the Gemini CLI history by comparing prompt prefix.
 
     Searches in ~/.gemini/tmp/{project_name}/chats/ for the first message matching
@@ -37,16 +39,14 @@ def get_session_id_by_prompt(project_name: str, prompt_prefix: str, n: int = 50)
 
     # Sort by mtime to check newest sessions first
     session_files = sorted(
-        history_dir.glob("*.json"),
-        key=lambda f: f.stat().st_mtime,
-        reverse=True
+        history_dir.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True
     )
 
     for session_file in session_files:
         try:
             with open(session_file, "r") as f:
                 data = json.load(f)
-                
+
             messages = data.get("messages", [])
             if not messages:
                 continue
@@ -62,11 +62,11 @@ def get_session_id_by_prompt(project_name: str, prompt_prefix: str, n: int = 50)
 
             # Extract text from the first content block
             first_text = content_list[0].get("text", "")
-            
+
             # Compare prefixes
             if first_text[:n] == prompt_prefix[:n]:
                 return data.get("sessionId")
-                
+
         except (json.JSONDecodeError, OSError, KeyError, IndexError):
             continue
 
@@ -112,7 +112,7 @@ def extract_json(text: str) -> Any:
     # We want to find the one that starts first.
     start_array = text.find("[")
     start_obj = text.find("{")
-    
+
     # Define candidates to try in order of their appearance
     candidates = []
     if start_array != -1 and start_obj != -1:
@@ -138,7 +138,9 @@ def extract_json(text: str) -> Any:
     return None
 
 
-def extract_json_or_raise(text: str, error_msg: str = "No valid JSON found in response.") -> Any:
+def extract_json_or_raise(
+    text: str, error_msg: str = "No valid JSON found in response."
+) -> Any:
     """Extract JSON or raise ValueError if none found.
 
     Use this for mandatory structured data (e.g. lead's research plan).

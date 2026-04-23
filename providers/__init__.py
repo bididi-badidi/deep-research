@@ -149,12 +149,12 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
             from .claude_cli import run as claude_run
 
             async def wrapped_claude_run(**kwargs):
-                # CLI expects prompt string. For multi-turn support in CLI, 
+                # CLI expects prompt string. For multi-turn support in CLI,
                 # we use session_id if provided, otherwise we flatten the conversation history.
                 session_id = kwargs.get("session_id")
                 messages = kwargs.get("messages")
                 tool_profile = kwargs.get("tool_profile")
-                
+
                 if kwargs.get("prompt") is None and messages:
                     if session_id:
                         # If we have a session, only send the latest user message
@@ -227,7 +227,7 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
             from .gemini_cli import run as gemini_run_cli
 
             async def wrapped_gemini_run_cli(**kwargs):
-                # CLI expects prompt string. For multi-turn support in CLI, 
+                # CLI expects prompt string. For multi-turn support in CLI,
                 # we flatten the conversation history if messages list is provided.
                 messages = kwargs.get("messages")
                 tool_profile = kwargs.get("tool_profile", "full")
