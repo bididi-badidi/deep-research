@@ -14,7 +14,7 @@ async def run_remediation_test():
     load_dotenv()
 
     # Use a specific workspace for this test
-    workspace_path = Path("./tests/workspace_remediation_test")
+    workspace_path = Path("./tests/workspace_test")
     if workspace_path.exists():
         import shutil
 
