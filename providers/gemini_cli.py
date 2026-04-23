@@ -15,6 +15,7 @@ async def run(
     workspace: str = "./workspace",
     approval_mode: str = "auto_edit",
     cli_session_id: str | None = None,
+    sandbox: bool = False,
 ) -> str:
     """Run a prompt through the Gemini CLI."""
     env = os.environ.copy()
@@ -30,13 +31,21 @@ async def run(
 
     cmd = [
         "gemini",
-        "-p",
-        prompt,
-        "-m",
-        model,
-        "--approval-mode",
-        approval_mode,
     ]
+
+    if sandbox:
+        cmd.append("-s")
+
+    cmd.extend(
+        [
+            "-p",
+            prompt,
+            "-m",
+            model,
+            "--approval-mode",
+            approval_mode,
+        ]
+    )
 
     if cli_session_id:
         cmd.extend(["--resume", cli_session_id])

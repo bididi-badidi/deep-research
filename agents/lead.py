@@ -259,7 +259,7 @@ async def synthesize(config: Config) -> str:
         while True:
             result = await provider(
                 model=model_name,
-                system=system_prompt,
+                system=system_prompt.replace("{current_round}", str(current_round)),
                 messages=messages,
                 tools=[DISPATCH_SUBAGENTS_TOOL] + FILE_TOOLS,
                 tool_executor=_exec_tool,

@@ -38,6 +38,7 @@ class ProviderRun(Protocol):
         workspace: str | None = None,
         session_id: str | None = None,
         tool_profile: str | None = None,
+        sandbox: bool = False,
     ) -> str: ...
 
 
@@ -269,6 +270,7 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                     workspace=kwargs.get("workspace", "./workspace"),
                     approval_mode=approval_mode,
                     cli_session_id=cli_session_id,
+                    sandbox=kwargs.get("sandbox", False),
                 )
 
                 if messages is not None:

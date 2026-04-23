@@ -92,6 +92,7 @@ async def run(config: Config) -> dict:
             tool_executor=tool_executor,
             max_tokens=1024,
             session_id=session_id,
+            sandbox=True,
             tool_profile="search_only",
         )
 

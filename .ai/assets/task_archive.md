@@ -48,7 +48,7 @@
 
 ### [x] Task 3.1: Tool Registry
 - **Completed:** 2026-04-21
-- **Details:** Refactored `FILE_TOOLS` into individual constants in `tools.py`. Defined `TOOL_PROFILES` (`full`, `read_only`, `write_only`, `search_only`). Added `get_tools_for_profile()` and `list_tool_profiles()` for dynamic tool assignment. Verified with unit tests.
+- **Details:** Refactored `FILE_TOOLS` into individual constants in `tools.py`. Defined `TOOL_PROFILES` (`full`, `read_only`, `search_only`). Added `get_tools_for_profile()` and `list_tool_profiles()` for dynamic tool assignment. Verified with unit tests.
 
 ### [x] Task 3.2: Inject Tool Profile Info into Lead's Planning Prompt
 - **Completed:** 2026-04-21
@@ -73,3 +73,31 @@
 ### [x] Task 3.7: Config Updates
 - **Completed:** 2026-04-21
 - **Details:** Added `max_remediation_rounds` to `Config` (default 2) and exposed it via the `--max-remediation-rounds` CLI argument in `main.py`.
+
+### [x] Task 3.8.1-3.8.4: Unit Testing for Tool Profiles and Lead/Subagent
+- **Completed:** 2026-04-23
+- **Details:** Verified `get_tools_for_profile()` and `list_tool_profiles()`. Confirmed `lead.plan()` defaults to "full" and `subagent.run()` respects assigned tool profiles.
+
+### [x] Task 3.9: Robust JSON parsing for CLI backend
+- **Completed:** 2026-04-23
+- **Details:** Created `utils.py` with `extract_json()` and `extract_json_or_raise()` to robustly extract JSON from freeform LLM text. Handles markdown code blocks, conversational filler, and embedded objects/arrays. Integrated into Lead planning and synthesis phases.
+
+### [x] Task 3.10: Multi-turn conversation support for CLI backend
+- **Completed:** 2026-04-23
+- **Details:** Added `session_id` support to Claude and Gemini CLI runners. Fixed conversation history flattening to ensure correct multi-turn behavior. Implemented CLI-specific synthesis loop in Lead agent to handle iterative tool calls without repeated process overhead.
+
+### [x] Task 3.11: Tighten CLI security by restricting subagent tool permissions
+- **Completed:** 2026-04-23
+- **Details:** Mapped `tool_profile` to CLI-specific profiles. Gemini CLI now uses `--approval-mode` for tool execution. Restricted subagent tool sets based on Lead's assignment, even in CLI mode.
+
+### [x] Task 3.12: Move CLI backend to Gemini
+- **Completed:** 2026-04-23
+- **Details:** Switched Receptionist and Lead agents to use Gemini in CLI mode by default for better stability and lower latency compared to Claude CLI. Implemented system prompt support for Gemini CLI via `GEMINI_SYSTEM_MD` and temporary files.
+
+### [x] Task 3.13: Implement custom tool scripts for CLI subagents (F4 Hardening)
+- **Completed:** 2026-04-23
+- **Details:** Implemented sandboxed file tools (`read_file.py`, `write_file.py`, `list_files.py`) with `Path.cwd().resolve()` workspace boundary enforcement. Built a JSON-RPC/MCP server (`server.py`) exposing these as `sandboxed_read_file`, `sandboxed_write_file`, `sandboxed_list_files`. Created Gemini CLI extension at `.gemini/extensions/sandboxed-tools/` using `excludeTools` to disable core file-system tools. Extension globally linked via `gemini extensions link`. Fixed `write_file.py` to read content from stdin (instead of argv) to handle multiline/special-char content. Verified: tools discoverable, write/read functional, path traversal escape blocked.
+
+### [x] Task 3.8.5: Verify remediation loop (CLI mode)
+- **Completed:** 2026-04-23
+- **Details:** Identified and fixed a bug in the Lead agent's synthesis loop for CLI mode where conversation history was causing context pollution and Human-Human message sequences. Refactored the loop to use a stateless, single-message approach with full consolidated findings in each turn. Verified with a simplified remediation test. Note: Complex prompts may still trigger 'AbortError' in Gemini CLI due to internal loop recovery mechanisms.
