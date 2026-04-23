@@ -62,6 +62,5 @@ async def run_remediation_test():
             "\nNOTE: report.md not found (might still be in remediation if test was cut short)"
         )
 
-
 if __name__ == "__main__":
     asyncio.run(run_remediation_test())
