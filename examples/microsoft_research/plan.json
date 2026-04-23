@@ -1,0 +1,62 @@
+[
+  {
+    "id": "financial-baseline",
+    "title": "Microsoft Consolidated Financial Baseline (2023-2026)",
+    "objective": "Extract and tabulate consolidated quarterly financial data from Microsoft's SEC filings (10-Q and 10-K) from April 2023 to March 2026. Include Revenue, Operating Income, Net Income, and EPS. Identify the top-level growth drivers mentioned in the 'Management's Discussion and Analysis' (MD&A) sections for each fiscal year. Avoid blogs and social media.",
+    "search_hints": [
+      "Microsoft Investor Relations SEC filings 2023 2024 2025 2026",
+      "Microsoft 10-K fiscal year 2023 2024 2025",
+      "Microsoft 10-Q quarterly reports 2023-2026",
+      "Microsoft consolidated statements of income 2023-2026"
+    ],
+    "tool_profile": "full"
+  },
+  {
+    "id": "intelligent-cloud",
+    "title": "Intelligent Cloud & Azure AI Performance",
+    "objective": "Analyse the 'Intelligent Cloud' segment performance from April 2023 to March 2026. Specifically track Azure revenue growth rates (constant currency), server products and cloud services revenue, and mentions of Azure AI services adoption. Document key milestones in AI infrastructure scaling and major partnership impacts (e.g., OpenAI) as reported in SEC filings and institutional research. Exclude non-English sources.",
+    "search_hints": [
+      "Microsoft Intelligent Cloud revenue by quarter 2023-2026",
+      "Azure revenue growth rate quarterly 2023-2026",
+      "Microsoft Azure AI services growth SEC filings",
+      "Institutional research Microsoft Azure market share 2024 2025"
+    ],
+    "tool_profile": "full"
+  },
+  {
+    "id": "productivity-copilot",
+    "title": "Productivity & Business Processes: The Copilot Rollout",
+    "objective": "Analyse the 'Productivity and Business Processes' segment from April 2023 to March 2026. Focus on Office 365 Commercial revenue, Microsoft 365 Copilot pricing/monetisation milestones, and adoption metrics. Track performance of LinkedIn and Dynamics 365. Document how Copilot integration is reported to have influenced Average Revenue Per User (ARPU). Prioritize official Microsoft earnings calls and SEC reports.",
+    "search_hints": [
+      "Microsoft Productivity and Business Processes quarterly revenue 2023-2026",
+      "Microsoft 365 Copilot adoption metrics earnings calls",
+      "Office 365 Commercial revenue growth 2023-2026",
+      "Microsoft 365 Copilot monetization strategy institutional research"
+    ],
+    "tool_profile": "full"
+  },
+  {
+    "id": "personal-computing-ai",
+    "title": "More Personal Computing & AI Integration",
+    "objective": "Investigate the 'More Personal Computing' segment from April 2023 to March 2026. Cover Windows OEM revenue trends, Surface/Hardware performance, and the impact of the Activision Blizzard acquisition on Gaming revenue. Specifically look for the strategic shift towards 'AI PCs' and Copilot+ integration in Windows. Use SEC filings and credible financial news citing institutional analysts.",
+    "search_hints": [
+      "Microsoft More Personal Computing revenue 2023-2026",
+      "Windows OEM revenue growth quarterly 2024 2025",
+      "Microsoft Gaming revenue Activision Blizzard impact 2024",
+      "Copilot+ PC market impact Microsoft earnings"
+    ],
+    "tool_profile": "full"
+  },
+  {
+    "id": "capex-and-institutional-outlook",
+    "title": "Capital Expenditure (AI) & Institutional Outlook",
+    "objective": "Track Microsoft's Capital Expenditures (CapEx) from April 2023 to March 2026, focusing on investments in data centres and AI hardware. Compare this with institutional analyst expectations and sentiment from firms like Goldman Sachs, Morgan Stanley, or JP Morgan. Summarise the 'bull' and 'bear' cases for Microsoft\u2019s AI strategy as presented in institutional research. Avoid social media/blogs.",
+    "search_hints": [
+      "Microsoft capital expenditure AI infrastructure 2023-2026",
+      "Microsoft CapEx guidance quarterly 2024 2025",
+      "Institutional analyst ratings Microsoft AI strategy 2025",
+      "Microsoft data center investment trends 2023-2026"
+    ],
+    "tool_profile": "full"
+  }
+]

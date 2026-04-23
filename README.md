@@ -8,28 +8,28 @@ The system uses a hierarchical "Hub and Spoke" architecture with three distinct 
 
 ```mermaid
 flowchart TD
-    User([User]) --> Receptionist[<b>Receptionist</b><br/>Claude 3.5 Sonnet]
+    User([User]) --> Receptionist[<b>Receptionist</b><br/>Claude 4.6 Sonnet]
     
     subgraph "Planning & Synthesis"
-    Receptionist -- Research Brief --> Lead[<b>Research Lead</b><br/>Claude 3 Opus]
+    Receptionist -- Research Brief --> Lead[<b>Lead Agent</b><br/>Claude 4.6 Opus]
     Lead -- Tasks --> Subagents
     Subagents -- Findings --> Lead
     Lead -- Synthesis --> Report([Final Report])
     end
 
     subgraph "Execution"
-    Subagents[<b>Subagents</b><br/>Gemini 1.5 Flash]
+    Subagents[<b>Research Subagent</b><br/>Gemini 3 Flash]
     Subagents <--> Search[[Google Search]]
     Subagents <--> FS[(Filesystem)]
     end
 ```
 
 ### Agent Roles
-1.  **Receptionist (Claude 3.5 Sonnet):** Handles the interactive intake. It asks clarifying questions to narrow down the topic, scope, and depth until a structured research brief is produced.
-2.  **Research Lead (Claude 3 Opus):** 
+1.  **Receptionist (Claude 4.6 Sonnet):** Handles the interactive intake. It asks clarifying questions to narrow down the topic, scope, and depth until a structured research brief is produced.
+2.  **Lead Agent (Claude 4.6 Opus):** 
     *   **Planning:** Decomposes the brief into specific, parallelizable research tasks.
     *   **Synthesis:** Aggregates findings from all subagents, resolves contradictions, and writes the final `report.md`.
-3.  **Subagents (Gemini 1.5 Flash):** Execute individual research tasks in parallel. They utilize **Google Search grounding** to find up-to-date information and write detailed findings to the workspace.
+3.  **Research Subagent (Gemini 3 Flash):** Executes individual research tasks in parallel. Utilizes **Google Search grounding** to find up-to-date information and writes detailed findings to the workspace.
 
 ## 🚀 Features
 
@@ -81,6 +81,11 @@ python main.py --workspace ./my-research-project
 - `workspace/findings/`: Individual `.md` files containing raw research from each subagent.
 - `workspace/report.md`: The final synthesized research report.
 
+## 📂 Examples
+
+You can find sample research outputs in the `examples/` directory:
+- **[Microsoft AI Transformation (2023-2026)](examples/microsoft_research/report.md):** A comprehensive report on Microsoft's financial evolution, AI product integration (Copilot, Azure), and strategic institutional positioning.
+
 ## 🧪 Development
 
 ### Running Tests
@@ -89,8 +94,8 @@ python main.py --workspace ./my-research-project
 pytest
 
 # Run manual integration tests
-python tests/manual/test_gemini_loop.py
-python tests/manual/test_anthropic_loop.py
+python tests/manual/test_cli_pipeline.py
+python tests/manual/test_receptionist.py
 ```
 
 ### Linting & Formatting
@@ -100,10 +105,10 @@ ruff format .
 ```
 
 ## 📈 Project Status
-This project is currently in **Phase 2 (CLI Backend Integration)**. 
+This project is currently in **Phase 3 (Iterative Deepening)**. 
 - [x] Phase 1: API Backend (Stable)
-- [x] Phase 2: CLI Backend (Wired & Testing)
-- [ ] Phase 3: Advanced Research Features (Citations, Iterative Deepening)
+- [x] Phase 2: CLI Backend (Stable)
+- [ ] Phase 3: Advanced Research Features (Iterative Deepening, Dynamic Tooling)
 
 Refer to [.ai/assets/progress.md](.ai/assets/progress.md) for detailed task tracking.
 
