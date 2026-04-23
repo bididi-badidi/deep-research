@@ -13,6 +13,7 @@ async def run(
     prompt: str,
     workspace: str = "./workspace",
     allowed_tools: list[str] | None = None,
+    session_id: str | None = None,
 ) -> str:
     """Run a prompt through the Claude CLI in non-interactive mode."""
     cmd = [
@@ -20,6 +21,9 @@ async def run(
         "--bare",
         "--dangerously-skip-permissions",
     ]
+    if session_id:
+        cmd.extend(["--session-id", session_id])
+
     if allowed_tools:
         cmd.extend(["--allowedTools", ",".join(allowed_tools)])
 

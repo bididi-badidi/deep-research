@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from config import Config
 from providers import get_provider
-from tools import FILE_TOOLS, execute as tool_execute
+from tools import get_tools_for_profile, execute as tool_execute
 from agents.prompts import load_prompt
 
 
@@ -17,6 +17,7 @@ async def run(config: Config, task: dict) -> str:
         task.get("objective") or task.get("description") or "Perform general research."
     )
     hints_list = task.get("search_hints") or task.get("agent_action")
+    profile = task.get("tool_profile", "full")
 
     prompt = f"# Research Task: {title}\n\n**Objective:** {objective}\n\n"
     if hints_list:
@@ -33,12 +34,15 @@ async def run(config: Config, task: dict) -> str:
         return await tool_execute(name, args, workspace=config.workspace)
 
     provider = get_provider(config.backend, "gemini")
+    tools = get_tools_for_profile(profile)
+
     return await provider(
         model=config.subagent_model,
         system=system,
         prompt=prompt,
-        tools=FILE_TOOLS,
+        tools=tools,
         tool_executor=_exec_tool,
         include_search=True,
         workspace=str(config.workspace),
+        tool_profile=profile,
     )

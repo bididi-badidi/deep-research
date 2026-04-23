@@ -1,5 +1,9 @@
-import asyncio
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+import asyncio
 from config import Config, Backend
 from agents import lead, subagent
 from dotenv import load_dotenv

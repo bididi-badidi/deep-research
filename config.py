@@ -21,5 +21,6 @@ class Config:
     subagent_model: str = "gemini-3-flash-preview"
 
     # Limits
-    max_subagents: int = 5
+    max_subagents: int = 15
     max_tokens: int = 16384
+    max_remediation_rounds: int = 5

@@ -13,6 +13,8 @@ async def run(
     system: str,
     prompt: str,
     workspace: str = "./workspace",
+    approval_mode: str = "auto_edit",
+    cli_session_id: str | None = None,
 ) -> str:
     """Run a prompt through the Gemini CLI."""
     env = os.environ.copy()
@@ -32,8 +34,12 @@ async def run(
         prompt,
         "-m",
         model,
-        "--yolo",  # Automatically approve tool usage if any
+        "--approval-mode",
+        approval_mode,
     ]
+
+    if cli_session_id:
+        cmd.extend(["--resume", cli_session_id])
 
     # Add a small random delay to avoid hitting quota limits in parallel execution
     import random
@@ -47,6 +53,7 @@ async def run(
 
         proc = await asyncio.create_subprocess_exec(
             *cmd,
+            stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=workspace,
