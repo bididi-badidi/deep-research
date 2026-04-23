@@ -54,11 +54,7 @@ async def run(config: Config) -> dict:
 
     # Use the configured backend. For CLI, we use gemini (Claude CLI issues).
     provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
-    model_name = (
-        config.subagent_model
-        if config.backend == Backend.CLI
-        else config.receptionist_model
-    )
+    model_name = config.receptionist_model
     provider = get_provider(config.backend, provider_name)
 
     # Get the user's initial description
