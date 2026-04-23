@@ -307,6 +307,18 @@ await lead.synthesize(config)
 - [x] **3.8.4** — Unit test: `subagent.run()` uses the correct tool set based on `tool_profile`.
 - [ ] **3.8.5** — Integration test (manual): run full pipeline with a query that should trigger remediation, verify the Lead calls `dispatch_subagents` and the final report incorporates remediation findings.
 
+### Task 3.9 — Robust JSON Parsing for CLI Backend
+
+**Files:** `utils.py`, `agents/lead.py`
+
+**Context:** In CLI mode, the lead agent may output conversational text along with JSON arrays. The current parsing logic is fragile.
+
+**Subtasks:**
+
+- [x] **3.9.1** — Create `utils.py` with `extract_json()` utility that handles markdown code blocks and conversational filler.
+- [x] **3.9.2** — Add unit tests for `extract_json()` covering nested delimiters, markdown, and direct JSON.
+- [x] **3.9.3** — Integrate `extract_json()` into `agents/lead.py` for both `plan()` and `synthesize()` (remediation tasks).
+
 ---
 
 ## Key Design Decisions

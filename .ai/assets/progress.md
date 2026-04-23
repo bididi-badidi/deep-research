@@ -2,6 +2,10 @@
 
 ## Current Task
 
+- [x] Task 3.9 — Robust JSON parsing for CLI backend
+- [x] Task 3.10 — Multi-turn conversation support for CLI backend
+- [x] Task 3.11 — Tighten CLI security by restricting subagent tool permissions
+- [x] Task 3.12 — Move CLI backend to Gemini to bypass broken/paid Claude CLI
 - [ ] Phase 3: Iterative Deepening & Dynamic Tool Assignment
     - [ ] Task 3.8 — Testing & Verification
 

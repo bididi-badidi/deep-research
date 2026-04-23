@@ -7,6 +7,22 @@ from typing import Awaitable, Callable, Protocol
 from config import Backend
 
 
+# CLI tool mappings (F3.2)
+CLAUDE_PROFILE_MAP = {
+    "full": ["Read", "Write", "Glob", "Grep"],
+    "read_only": ["Read", "Glob", "Grep"],
+    "write_only": ["Write"],
+    "search_only": [],
+}
+
+GEMINI_PROFILE_MAP = {
+    "full": "auto_edit",
+    "read_only": "default",
+    "write_only": "auto_edit",
+    "search_only": "default",
+}
+
+
 class ProviderRun(Protocol):
     async def __call__(
         self,
@@ -20,6 +36,8 @@ class ProviderRun(Protocol):
         include_search: bool = True,
         max_tokens: int = 4096,
         workspace: str | None = None,
+        session_id: str | None = None,
+        tool_profile: str | None = None,
     ) -> str: ...
 
 
@@ -131,9 +149,36 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
             from .claude_cli import run as claude_run
 
             async def wrapped_claude_run(**kwargs):
-                # CLI expects prompt string.
-                if kwargs.get("prompt") is None and kwargs.get("messages"):
-                    kwargs["prompt"] = kwargs["messages"][-1]["content"]
+                # CLI expects prompt string. For multi-turn support in CLI, 
+                # we use session_id if provided, otherwise we flatten the conversation history.
+                session_id = kwargs.get("session_id")
+                messages = kwargs.get("messages")
+                tool_profile = kwargs.get("tool_profile")
+                
+                if kwargs.get("prompt") is None and messages:
+                    if session_id:
+                        # If we have a session, only send the latest user message
+                        # find the last message from user
+                        last_user_msg = None
+                        for msg in reversed(messages):
+                            if msg["role"] == "user":
+                                last_user_msg = msg["content"]
+                                break
+                        if last_user_msg:
+                            kwargs["prompt"] = last_user_msg
+                        else:
+                            # Fallback to flattening if no user message found (shouldn't happen)
+                            kwargs["prompt"] = "Please continue."
+                    else:
+                        # Improved prompt-flattening approach (F1.3)
+                        # We use XML-like tags to give more structure to the history
+                        prompt_parts = ["Conversation history:"]
+                        for msg in messages:
+                            role = msg["role"]
+                            content = msg["content"]
+                            prompt_parts.append(f"<{role}>\n{content}\n</{role}>")
+                        prompt_parts.append("Please provide your next response.")
+                        kwargs["prompt"] = "\n\n".join(prompt_parts)
 
                 prompt = kwargs.get("prompt")
                 if not prompt:
@@ -143,27 +188,38 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
 
                 # Map tools to allowed_tools names (Claude CLI built-ins)
                 # Map: read_file -> Read, write_file -> Write, list_files -> Glob
-                tools = kwargs.get("tools", [])
                 allowed_tools = []
-                for t in tools:
-                    tname = t["name"]
-                    if tname == "read_file":
-                        allowed_tools.append("Read")
-                    elif tname == "write_file":
-                        allowed_tools.append("Write")
-                    elif tname == "list_files":
-                        allowed_tools.append("Glob")
-                    elif tname in ("Read", "Write", "Glob", "Bash", "Edit", "Grep"):
-                        allowed_tools.append(tname)
-                    # Ignore custom tools like create_plan or submit_brief for CLI mode
+                if tool_profile and tool_profile in CLAUDE_PROFILE_MAP:
+                    allowed_tools = CLAUDE_PROFILE_MAP[tool_profile]
+                else:
+                    # Fallback to deriving from individual tools if profile not provided
+                    tools = kwargs.get("tools", [])
+                    for t in tools:
+                        tname = t["name"]
+                        if tname in ("read_file", "list_references", "read_reference"):
+                            allowed_tools.append("Read")
+                        elif tname == "write_file":
+                            allowed_tools.append("Write")
+                        elif tname == "list_files":
+                            allowed_tools.append("Glob")
+                        elif tname in ("Read", "Write", "Glob", "Bash", "Edit", "Grep"):
+                            allowed_tools.append(tname)
+                    # Deduplicate
+                    allowed_tools = list(set(allowed_tools))
 
-                return await claude_run(
+                result = await claude_run(
                     model=kwargs["model"],
                     system=kwargs["system"],
                     prompt=prompt,
                     workspace=kwargs.get("workspace", "./workspace"),
                     allowed_tools=allowed_tools if allowed_tools else None,
+                    session_id=session_id,
                 )
+
+                if messages is not None:
+                    messages.append({"role": "assistant", "content": result})
+
+                return result
 
             return wrapped_claude_run
 
@@ -171,9 +227,34 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
             from .gemini_cli import run as gemini_run_cli
 
             async def wrapped_gemini_run_cli(**kwargs):
-                # CLI expects prompt string.
-                if kwargs.get("prompt") is None and kwargs.get("messages"):
-                    kwargs["prompt"] = kwargs["messages"][-1]["content"]
+                # CLI expects prompt string. For multi-turn support in CLI, 
+                # we flatten the conversation history if messages list is provided.
+                messages = kwargs.get("messages")
+                tool_profile = kwargs.get("tool_profile", "full")
+                approval_mode = GEMINI_PROFILE_MAP.get(tool_profile, "auto-edit")
+                session_id = kwargs.get("session_id")
+                cli_session_id = kwargs.get("cli_session_id")
+
+                if kwargs.get("prompt") is None and messages:
+                    if session_id:
+                        # If we have a session, only send the latest user message
+                        last_user_msg = None
+                        for msg in reversed(messages):
+                            if msg["role"] == "user":
+                                last_user_msg = msg["content"]
+                                break
+                        if last_user_msg:
+                            kwargs["prompt"] = last_user_msg
+                        else:
+                            kwargs["prompt"] = "Please continue."
+                    else:
+                        # Flatten history if no session_id
+                        prompt_parts = []
+                        for msg in messages:
+                            role = "Human" if msg["role"] == "user" else "Assistant"
+                            content = msg["content"]
+                            prompt_parts.append(f"{role}: {content}")
+                        kwargs["prompt"] = "\n\n".join(prompt_parts) + "\n\nAssistant: "
 
                 prompt = kwargs.get("prompt")
                 if not prompt:
@@ -181,12 +262,19 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                         "At least one of 'prompt' or 'messages' must be provided."
                     )
 
-                return await gemini_run_cli(
+                result = await gemini_run_cli(
                     model=kwargs["model"],
                     system=kwargs["system"],
                     prompt=prompt,
                     workspace=kwargs.get("workspace", "./workspace"),
+                    approval_mode=approval_mode,
+                    cli_session_id=cli_session_id,
                 )
+
+                if messages is not None:
+                    messages.append({"role": "assistant", "content": result})
+
+                return result
 
             return wrapped_gemini_run_cli
 

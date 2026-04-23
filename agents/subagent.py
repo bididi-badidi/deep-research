@@ -44,4 +44,5 @@ async def run(config: Config, task: dict) -> str:
         tool_executor=_exec_tool,
         include_search=True,
         workspace=str(config.workspace),
+        tool_profile=profile,
     )

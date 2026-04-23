@@ -9,6 +9,7 @@ from config import Config, Backend
 from providers import get_provider
 from tools import FILE_TOOLS, list_tool_profiles, execute as tool_execute
 from agents.prompts import load_prompt
+from utils import extract_json, extract_json_or_raise
 
 CREATE_PLAN_TOOL = {
     "name": "create_plan",
@@ -63,10 +64,14 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         nonlocal plan_data
         if name == "create_plan":
             try:
-                plan_data = json.loads(args["tasks"])
-                return "Plan created."
-            except json.JSONDecodeError as e:
-                return f"Error: Failed to parse JSON in 'tasks'. Please ensure it's a valid JSON array of objects. Detail: {e}"
+                parsed = extract_json_or_raise(args["tasks"], "Error: Failed to parse JSON in 'tasks'. Please ensure it's a valid JSON array of objects.")
+                if isinstance(parsed, list):
+                    plan_data = parsed
+                    return "Plan created."
+                else:
+                    return "Error: 'tasks' must be a JSON array of objects."
+            except ValueError as e:
+                return str(e)
         return await tool_execute(name, args, workspace=config.workspace)
 
     messages = [
@@ -105,6 +110,7 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         tool_executor=_exec_tool,
         max_tokens=config.max_tokens,
         workspace=str(config.workspace),
+        tool_profile="full",
     )
 
     # Persist plan
@@ -119,20 +125,16 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         plan_path.write_text(json.dumps(plan_data, indent=2))
     elif response_text:
         # Final fallback: if we still don't have plan_data, try more aggressive cleanup
-
-        # Look for the first '[' and last ']'
         try:
-            start = response_text.find("[")
-            end = response_text.rfind("]")
-            if start != -1 and end != -1:
-                potential_json = response_text[start : end + 1]
-                plan_data = json.loads(potential_json)
+            parsed = extract_json_or_raise(response_text)
+            if isinstance(parsed, list):
+                plan_data = parsed
                 # Validate and default tool_profile for fallback parsing too
                 for task in plan_data:
                     if "tool_profile" not in task:
                         task["tool_profile"] = "full"
                 plan_path.write_text(json.dumps(plan_data, indent=2))
-        except (json.JSONDecodeError, ValueError):
+        except ValueError:
             pass
 
     if plan_data is None:
@@ -165,9 +167,16 @@ async def synthesize(config: Config) -> str:
     )
     if config.backend == Backend.CLI:
         system_prompt += (
-            "\n\nIMPORTANT: In this environment, you MUST output the final report "
-            "directly in your response text. Do NOT use any tools to write the file. "
-            "Python will handle writing your output to report.md."
+            "\n\nIMPORTANT: In this environment, custom tool calls are unavailable. "
+            "You have two options:\n"
+            "1. If the findings are sufficient, output ONLY the final report in markdown format "
+            "(starting with a `#` heading). Python will save it to report.md.\n"
+            "2. If you need more research, output ONLY a JSON object in this exact format "
+            "(no markdown, no explanation):\n"
+            '{"action": "dispatch_subagents", "reason": "<why more research is needed>", '
+            '"tasks": [{"id": "<slug>", "title": "<title>", "objective": "<instructions>", '
+            '"search_hints": ["<query1>"], "tool_profile": "full"}]}\n'
+            "Do NOT mix JSON and markdown in the same response."
         )
 
     current_round = 0
@@ -190,7 +199,10 @@ async def synthesize(config: Config) -> str:
                 return f"Error: Maximum remediation rounds ({config.max_remediation_rounds}) reached. Please synthesize the final report now."
 
             try:
-                remediation_tasks = json.loads(args["tasks"])
+                remediation_tasks = extract_json_or_raise(args["tasks"], "Error: 'tasks' must be a JSON array of task objects.")
+                if not isinstance(remediation_tasks, list):
+                    return "Error: 'tasks' must be a JSON array of task objects."
+                
                 reason = args["reason"]
                 print(
                     f"\n--- Lead requesting remediation (round {current_round}/{config.max_remediation_rounds}): {reason} ---"
@@ -232,15 +244,100 @@ async def synthesize(config: Config) -> str:
     )
     provider = get_provider(config.backend, provider_name)
 
-    result = await provider(
-        model=model_name,
-        system=system_prompt.replace("{current_round}", str(current_round)),
-        messages=messages,
-        tools=[DISPATCH_SUBAGENTS_TOOL] + FILE_TOOLS,
-        tool_executor=_exec_tool,
-        max_tokens=config.max_tokens,
-        workspace=str(config.workspace),
-    )
+    if config.backend == Backend.CLI:
+        from agents import subagent as subagent_module
+
+        result = ""
+        while True:
+            result = await provider(
+                model=model_name,
+                system=system_prompt,
+                messages=messages,
+                tools=[DISPATCH_SUBAGENTS_TOOL] + FILE_TOOLS,
+                tool_executor=_exec_tool,
+                max_tokens=config.max_tokens,
+                workspace=str(config.workspace),
+                tool_profile="full",
+            )
+
+            parsed = extract_json(result)
+            if isinstance(parsed, dict) and "tasks" in parsed:
+                if current_round >= config.max_remediation_rounds:
+                    print(
+                        f"\n--- Max remediation rounds ({config.max_remediation_rounds}) reached. Forcing final report. ---"
+                    )
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            f"Maximum remediation rounds ({config.max_remediation_rounds}) reached. "
+                            "You MUST now write the final report in markdown format using the available findings."
+                        ),
+                    })
+                    result = await provider(
+                        model=model_name,
+                        system=system_prompt,
+                        messages=messages,
+                        tools=[DISPATCH_SUBAGENTS_TOOL] + FILE_TOOLS,
+                        tool_executor=_exec_tool,
+                        max_tokens=config.max_tokens,
+                        workspace=str(config.workspace),
+                        tool_profile="full",
+                    )
+                    break
+
+                remediation_tasks = parsed["tasks"]
+                if isinstance(remediation_tasks, str):
+                    remediation_tasks = extract_json(remediation_tasks) or []
+                if not isinstance(remediation_tasks, list):
+                    break
+
+                reason = parsed.get("reason", "Additional research needed.")
+                current_round += 1
+                print(
+                    f"\n--- Lead requesting remediation (round {current_round}/{config.max_remediation_rounds}): {reason} ---"
+                )
+
+                for t in remediation_tasks:
+                    if "tool_profile" not in t:
+                        t["tool_profile"] = "full"
+
+                sub_results = await asyncio.gather(
+                    *(subagent_module.run(config, task) for task in remediation_tasks),
+                    return_exceptions=True,
+                )
+
+                summary = []
+                for task, sub_result in zip(remediation_tasks, sub_results):
+                    status = "FAIL" if isinstance(sub_result, Exception) else "done"
+                    summary.append(f"[{status}] {task['id']}: {task['title']}")
+
+                new_findings = _read_findings()
+                # Discard accumulated history to prevent O(n²) context growth.
+                # Each new round gets a fresh prompt with the full updated findings.
+                messages[1:] = []
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        f"Remediation round {current_round} complete.\n"
+                        f"Summary:\n" + "\n".join(summary) + "\n\n"
+                        f"Updated findings:\n{new_findings}\n\n"
+                        "Please now synthesize the final report, or request more research if still insufficient."
+                    ),
+                })
+            else:
+                # Model output markdown — we're done
+                break
+    else:
+        result = await provider(
+            model=model_name,
+            system=system_prompt.replace("{current_round}", str(current_round)),
+            messages=messages,
+            tools=[DISPATCH_SUBAGENTS_TOOL] + FILE_TOOLS,
+            tool_executor=_exec_tool,
+            max_tokens=config.max_tokens,
+            workspace=str(config.workspace),
+            tool_profile="full",
+        )
 
     # Persist report if the model didn't use a tool to write it (e.g. in CLI mode fallback)
     report_path = config.workspace / "report.md"
