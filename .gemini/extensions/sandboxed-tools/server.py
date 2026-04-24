@@ -1,13 +1,17 @@
 import sys
 import json
 import subprocess
+import os
 from pathlib import Path
 
 # Path to the scripts directory relative to this file
 SCRIPTS_DIR = Path(__file__).parent / "scripts"
+DEBUG_LOGGING = os.getenv("SANDBOXED_TOOLS_DEBUG", "").lower() in ("1", "true", "yes", "on")
 
 
 def log(msg):
+    if not DEBUG_LOGGING:
+        return
     sys.stderr.write(f"DEBUG: {msg}\n")
     sys.stderr.flush()
 
@@ -117,38 +121,52 @@ def main():
             result_text = ""
             error = None
 
+            if not isinstance(args, dict):
+                error = "Invalid arguments: 'arguments' must be an object"
+
             tool_name = (
                 name.replace("sandboxed_", "")
                 if name.startswith("sandboxed_")
                 else name
             )
 
-            if tool_name == "read_file":
+            if error:
+                pass
+            elif tool_name == "read_file":
                 path = args.get("path")
-                proc = subprocess.run(
-                    ["python3", str(SCRIPTS_DIR / "read_file.py"), path],
-                    capture_output=True,
-                    text=True,
-                )
-                result_text = proc.stdout if proc.returncode == 0 else proc.stderr
+                if not isinstance(path, str) or not path:
+                    error = "Invalid arguments: 'path' is required and must be a non-empty string"
+                else:
+                    proc = subprocess.run(
+                        ["python3", str(SCRIPTS_DIR / "read_file.py"), path],
+                        capture_output=True,
+                        text=True,
+                    )
+                    result_text = proc.stdout if proc.returncode == 0 else proc.stderr
             elif tool_name == "write_file":
                 path = args.get("path")
-                content = args.get("content", "")
-                proc = subprocess.run(
-                    ["python3", str(SCRIPTS_DIR / "write_file.py"), path],
-                    input=content,
-                    capture_output=True,
-                    text=True,
-                )
-                result_text = proc.stdout if proc.returncode == 0 else proc.stderr
+                if not isinstance(path, str) or not path:
+                    error = "Invalid arguments: 'path' is required and must be a non-empty string"
+                else:
+                    content = args.get("content", "")
+                    proc = subprocess.run(
+                        ["python3", str(SCRIPTS_DIR / "write_file.py"), path],
+                        input=content,
+                        capture_output=True,
+                        text=True,
+                    )
+                    result_text = proc.stdout if proc.returncode == 0 else proc.stderr
             elif tool_name == "list_files":
                 path = args.get("path", ".")
-                proc = subprocess.run(
-                    ["python3", str(SCRIPTS_DIR / "list_files.py"), path],
-                    capture_output=True,
-                    text=True,
-                )
-                result_text = proc.stdout if proc.returncode == 0 else proc.stderr
+                if not isinstance(path, str):
+                    error = "Invalid arguments: 'path' must be a string"
+                else:
+                    proc = subprocess.run(
+                        ["python3", str(SCRIPTS_DIR / "list_files.py"), path],
+                        capture_output=True,
+                        text=True,
+                    )
+                    result_text = proc.stdout if proc.returncode == 0 else proc.stderr
             else:
                 error = f"Unknown tool: {name}"
 

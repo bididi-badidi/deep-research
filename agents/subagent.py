@@ -6,6 +6,7 @@ from config import Config
 from providers import get_provider
 from tools import get_tools_for_profile, execute as tool_execute
 from agents.prompts import load_prompt
+from utils import get_provider_name
 
 
 async def run(config: Config, task: dict) -> str:
@@ -33,7 +34,9 @@ async def run(config: Config, task: dict) -> str:
     async def _exec_tool(name: str, args: dict) -> str:
         return await tool_execute(name, args, workspace=config.workspace)
 
-    provider = get_provider(config.backend, "gemini")
+    model_name = config.subagent_model
+    provider_name = get_provider_name(model_name)
+    provider = get_provider(config.backend, provider_name)
     tools = get_tools_for_profile(profile)
 
     return await provider(

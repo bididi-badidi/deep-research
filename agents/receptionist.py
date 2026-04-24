@@ -8,7 +8,7 @@ import json
 from config import Backend, Config
 from providers import get_provider
 from agents.prompts import load_prompt
-from utils import extract_json
+from utils import extract_json, get_provider_name
 
 SUBMIT_BRIEF_TOOL = {
     "name": "submit_brief",
@@ -52,9 +52,9 @@ async def run(config: Config) -> dict:
             return "Brief submitted successfully. The research team will begin shortly."
         return f"Unknown tool: {name}"
 
-    # Use the configured backend. For CLI, we use gemini (Claude CLI issues).
-    provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
+    # Use the configured backend.
     model_name = config.receptionist_model
+    provider_name = get_provider_name(model_name)
     provider = get_provider(config.backend, provider_name)
 
     # Get the user's initial description

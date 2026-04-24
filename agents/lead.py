@@ -9,7 +9,7 @@ from config import Config, Backend
 from providers import get_provider
 from tools import FILE_TOOLS, list_tool_profiles, execute as tool_execute
 from agents.prompts import load_prompt
-from utils import extract_json, extract_json_or_raise
+from utils import extract_json, extract_json_or_raise, get_provider_name
 
 CREATE_PLAN_TOOL = {
     "name": "create_plan",
@@ -84,8 +84,8 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         }
     ]
 
-    provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
     model_name = config.lead_model
+    provider_name = get_provider_name(model_name)
     provider = get_provider(config.backend, provider_name)
 
     profiles_str = json.dumps(list_tool_profiles(), indent=2)
@@ -244,10 +244,8 @@ async def synthesize(config: Config) -> str:
 
         return await tool_execute(name, args, workspace=config.workspace)
 
-    provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
-    model_name = (
-        config.subagent_model if config.backend == Backend.CLI else config.lead_model
-    )
+    model_name = config.lead_model
+    provider_name = get_provider_name(model_name)
     provider = get_provider(config.backend, provider_name)
 
     if config.backend == Backend.CLI:

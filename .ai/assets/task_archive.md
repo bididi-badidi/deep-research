@@ -48,7 +48,7 @@
 
 ### [x] Task 3.1: Tool Registry
 - **Completed:** 2026-04-21
-- **Details:** Refactored `FILE_TOOLS` into individual constants in `tools.py`. Defined `TOOL_PROFILES` (`full`, `read_only`, `search_only`). Added `get_tools_for_profile()` and `list_tool_profiles()` for dynamic tool assignment. Verified with unit tests.
+- **Details:** Refactored `FILE_TOOLS` into individual constants in `tools.py`. Defined `TOOL_PROFILES` (`full`, `read_only`, `search_only`, `write_only`). Added `get_tools_for_profile()` and `list_tool_profiles()` for dynamic tool assignment. Verified with unit tests.
 
 ### [x] Task 3.2: Inject Tool Profile Info into Lead's Planning Prompt
 - **Completed:** 2026-04-21
