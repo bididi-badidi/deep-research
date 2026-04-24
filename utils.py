@@ -149,3 +149,14 @@ def extract_json_or_raise(
     if result is None:
         raise ValueError(error_msg)
     return result
+
+
+def get_provider_name(model_name: str) -> str:
+    """Derive the provider name ('anthropic' or 'gemini') from the model name."""
+    m = model_name.lower()
+    if "gemini" in m:
+        return "gemini"
+    if "claude" in m or "anthropic" in m or "sonnet" in m or "opus" in m:
+        return "anthropic"
+    # Fallback default
+    return "gemini"

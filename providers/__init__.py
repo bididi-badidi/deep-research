@@ -38,6 +38,7 @@ class ProviderRun(Protocol):
         workspace: str | None = None,
         session_id: str | None = None,
         tool_profile: str | None = None,
+        sandbox: bool = False,
     ) -> str: ...
 
 
@@ -231,7 +232,7 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                 # we flatten the conversation history if messages list is provided.
                 messages = kwargs.get("messages")
                 tool_profile = kwargs.get("tool_profile", "full")
-                approval_mode = GEMINI_PROFILE_MAP.get(tool_profile, "auto-edit")
+                approval_mode = GEMINI_PROFILE_MAP.get(tool_profile, "auto_edit")
                 session_id = kwargs.get("session_id")
                 cli_session_id = kwargs.get("cli_session_id")
 
@@ -269,6 +270,7 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                     workspace=kwargs.get("workspace", "./workspace"),
                     approval_mode=approval_mode,
                     cli_session_id=cli_session_id,
+                    sandbox=kwargs.get("sandbox", False),
                 )
 
                 if messages is not None:

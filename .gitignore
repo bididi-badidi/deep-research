@@ -24,6 +24,9 @@ logs/
 workspace/
 workspace_cli/
 tests/workspace_test/
+tests/workspace_remediation_test/
+tests/workspace_test_simple/
+breakdown.save
 
 # Editor and IDE
 .vscode/

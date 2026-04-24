@@ -1,0 +1,12 @@
+{
+  "name": "sandboxed-tools",
+  "version": "0.1.0",
+  "description": "Custom sandboxed file tools for subagents",
+  "mcpServers": {
+    "sandboxed": {
+      "command": "python3",
+      "args": ["${extensionPath}/server.py"]
+    }
+  },
+  "excludeTools": ["read_file", "write_file", "list_directory", "glob", "grep_search", "read_many_files"]
+}

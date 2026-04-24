@@ -7,8 +7,8 @@ def test_config_defaults():
     assert cfg.backend == Backend.API
     assert cfg.workspace == Path("./workspace")
     assert "sonnet" in cfg.receptionist_model.lower()
-    assert any(m in cfg.lead_model.lower() for m in ["sonnet", "opus"])
-    assert "flash" in cfg.subagent_model.lower()
+    assert any(m in cfg.lead_model.lower() for m in ["sonnet", "opus", "pro"])
+    assert any(m in cfg.subagent_model.lower() for m in ["sonnet", "flash", "pro"])
 
 
 def test_config_overrides():

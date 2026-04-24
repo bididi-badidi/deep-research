@@ -9,7 +9,7 @@ from config import Config, Backend
 from providers import get_provider
 from tools import FILE_TOOLS, list_tool_profiles, execute as tool_execute
 from agents.prompts import load_prompt
-from utils import extract_json, extract_json_or_raise
+from utils import extract_json, extract_json_or_raise, get_provider_name
 
 CREATE_PLAN_TOOL = {
     "name": "create_plan",
@@ -84,10 +84,8 @@ async def plan(config: Config, brief: dict) -> list[dict]:
         }
     ]
 
-    provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
-    model_name = (
-        config.subagent_model if config.backend == Backend.CLI else config.lead_model
-    )
+    model_name = config.lead_model
+    provider_name = get_provider_name(model_name)
     provider = get_provider(config.backend, provider_name)
 
     profiles_str = json.dumps(list_tool_profiles(), indent=2)
@@ -246,10 +244,8 @@ async def synthesize(config: Config) -> str:
 
         return await tool_execute(name, args, workspace=config.workspace)
 
-    provider_name = "gemini" if config.backend == Backend.CLI else "anthropic"
-    model_name = (
-        config.subagent_model if config.backend == Backend.CLI else config.lead_model
-    )
+    model_name = config.lead_model
+    provider_name = get_provider_name(model_name)
     provider = get_provider(config.backend, provider_name)
 
     if config.backend == Backend.CLI:
@@ -259,7 +255,7 @@ async def synthesize(config: Config) -> str:
         while True:
             result = await provider(
                 model=model_name,
-                system=system_prompt,
+                system=system_prompt.replace("{current_round}", str(current_round)),
                 messages=messages,
                 tools=[DISPATCH_SUBAGENTS_TOOL] + FILE_TOOLS,
                 tool_executor=_exec_tool,
@@ -322,20 +318,18 @@ async def synthesize(config: Config) -> str:
                     summary.append(f"[{status}] {task['id']}: {task['title']}")
 
                 new_findings = _read_findings()
-                # Discard accumulated history to prevent O(n²) context growth.
-                # Each new round gets a fresh prompt with the full updated findings.
-                messages[1:] = []
-                messages.append(
+                # Discard previous history to prevent context pollution and O(n²) growth.
+                # In CLI mode, we start fresh with the full consolidated findings in every round.
+                messages[:] = [
                     {
                         "role": "user",
                         "content": (
-                            f"Remediation round {current_round} complete.\n"
-                            f"Summary:\n" + "\n".join(summary) + "\n\n"
-                            f"Updated findings:\n{new_findings}\n\n"
-                            "Please now synthesize the final report, or request more research if still insufficient."
+                            f"All subagents have completed their research (including {current_round} remediation rounds). "
+                            f"Here are the COMPLETE consolidated findings:\n{new_findings}\n\n"
+                            "Please now synthesize the final report in markdown format, or request more research if still insufficient."
                         ),
                     }
-                )
+                ]
             else:
                 # Model output markdown — we're done
                 break
