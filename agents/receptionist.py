@@ -119,3 +119,65 @@ async def run(config: Config) -> dict:
     print("\n--- Research brief compiled ---")
     print(json.dumps(brief, indent=2))
     return brief
+
+
+async def run_with_queue(
+    config: Config,
+    in_q: asyncio.Queue,
+    out_q: asyncio.Queue,
+    on_brief,
+) -> dict:
+    """Queue-based receptionist for programmatic (Gradio) integration.
+
+    Replaces stdin/stdout with asyncio Queues so any UI can drive the
+    conversation.  ``on_brief`` is an async callable invoked with the
+    completed brief dict once ``submit_brief`` is called by the model.
+    """
+    messages: list[dict] = []
+    brief: dict | None = None
+
+    async def tool_executor(name: str, args: dict) -> str:
+        nonlocal brief
+        if name == "submit_brief":
+            brief = args
+            return "Brief submitted successfully. The research team will begin shortly."
+        return f"Unknown tool: {name}"
+
+    provider_name = get_provider_name(config.receptionist_model)
+    provider = get_provider(config.backend, provider_name)
+    system_prompt = load_prompt("receptionist")
+
+    initial_input = await in_q.get()
+    messages.append({"role": "user", "content": initial_input})
+
+    while True:
+        try:
+            response_text = await provider(
+                model=config.receptionist_model,
+                system=system_prompt,
+                messages=messages,
+                tools=[SUBMIT_BRIEF_TOOL],
+                tool_executor=tool_executor,
+                max_tokens=1024,
+                session_id=None,
+                tool_profile="search_only",
+            )
+        except Exception as exc:
+            await out_q.put(f"*(Receptionist error: {exc})*")
+            return {}
+
+        if brief is not None:
+            closing = response_text or "Brief submitted! The research team will begin shortly."
+            await out_q.put(closing)
+            await on_brief(brief)
+            break
+
+        # Always put something in out_q so send_message doesn't block forever
+        await out_q.put(response_text or "*(no response from model)*")
+
+        user_input = await in_q.get()
+        if user_input.strip().lower() in ("quit", "exit", "q"):
+            raise KeyboardInterrupt("User cancelled intake.")
+        messages.append({"role": "user", "content": user_input})
+
+    return brief

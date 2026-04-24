@@ -81,6 +81,11 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
             from google.genai import types as genai_types
 
             async def wrapped_gemini_run(**kwargs):
+                # Save original dict-format messages list before conversion so we
+                # can append the assistant reply for multi-turn support (mirrors the
+                # CLI wrappers at lines ~220 and ~275).
+                original_messages = kwargs.get("messages")
+
                 # First pass: map tool_use_id to tool name (Anthropic format)
                 tool_names = {}
                 if kwargs.get("messages"):
@@ -141,7 +146,12 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                     "include_search",
                 }
                 filtered_kwargs = {k: v for k, v in kwargs.items() if k in valid_keys}
-                return await gemini_run(**filtered_kwargs)
+                result = await gemini_run(**filtered_kwargs)
+
+                if original_messages is not None:
+                    original_messages.append({"role": "assistant", "content": result})
+
+                return result
 
             return wrapped_gemini_run
 

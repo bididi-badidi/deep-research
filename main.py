@@ -18,6 +18,56 @@ from dotenv import load_dotenv
 from config import Backend, Config
 
 
+async def run_pipeline(
+    config: Config,
+    brief: dict,
+    on_log=None,
+) -> None:
+    """Execute the full research pipeline after the brief is gathered.
+
+    Args:
+        config:  Runtime configuration (backend, workspace, etc.)
+        brief:   Research brief dict produced by the receptionist.
+        on_log:  Optional callable(str) invoked for each log line.
+                 Defaults to ``print`` so CLI usage is unchanged.
+    """
+    log = on_log or print
+
+    from agents import lead
+    from agents import subagent
+
+    # ── 2. Lead: plan research tasks ────────────────────────────────────
+    log("\n--- Planning research ---")
+    tasks = await lead.plan(config, brief)
+
+    log(f"\nResearch plan ({len(tasks)} tasks):")
+    for t in tasks:
+        log(f"  - [{t['id']}] {t['title']}")
+
+    # ── 3. Subagents: execute research in parallel ──────────────────────
+    log("\n--- Executing research subagents ---")
+    results = await asyncio.gather(
+        *(subagent.run(config, task) for task in tasks),
+        return_exceptions=True,
+    )
+
+    for task, result in zip(tasks, results):
+        status = "FAIL" if isinstance(result, Exception) else "done"
+        detail = str(result) if isinstance(result, Exception) else ""
+        log(f"  [{status}] {task['title']}  {detail}")
+
+    # ── 4. Lead: synthesize findings into final report ──────────────────
+    log("\n--- Synthesizing findings (may trigger remediation rounds) ---")
+    await lead.synthesize(config)
+
+    report_path = config.workspace / "report.md"
+    if report_path.exists():
+        size = len(report_path.read_text())
+        log(f"\nFinal report written to {report_path} ({size:,} chars)")
+    else:
+        log("\nWarning: report.md not found — check workspace for outputs")
+
+
 async def main() -> None:
     # Load .env variables before anything else
     load_dotenv()
@@ -61,40 +111,7 @@ async def main() -> None:
 
     brief = await receptionist.run(config)
 
-    # ── 2. Lead: plan research tasks ────────────────────────────────────
-    from agents import lead
-
-    print("\n--- Planning research ---")
-    tasks = await lead.plan(config, brief)
-
-    print(f"\nResearch plan ({len(tasks)} tasks):")
-    for t in tasks:
-        print(f"  - [{t['id']}] {t['title']}")
-
-    # ── 3. Subagents: execute research in parallel ──────────────────────
-    from agents import subagent
-
-    print("\n--- Executing research subagents ---")
-    results = await asyncio.gather(
-        *(subagent.run(config, task) for task in tasks),
-        return_exceptions=True,
-    )
-
-    for task, result in zip(tasks, results):
-        status = "FAIL" if isinstance(result, Exception) else "done"
-        detail = str(result) if isinstance(result, Exception) else ""
-        print(f"  [{status}] {task['title']}  {detail}")
-
-    # ── 4. Lead: synthesize findings into final report ──────────────────
-    print("\n--- Synthesizing findings (may trigger remediation rounds) ---")
-    await lead.synthesize(config)
-
-    report_path = config.workspace / "report.md"
-    if report_path.exists():
-        size = len(report_path.read_text())
-        print(f"\nFinal report written to {report_path} ({size:,} chars)")
-    else:
-        print("\nWarning: report.md not found — check workspace for outputs")
+    await run_pipeline(config, brief)
 
 
 if __name__ == "__main__":
