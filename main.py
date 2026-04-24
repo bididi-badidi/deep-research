@@ -52,7 +52,7 @@ async def main() -> None:
 
     config = Config(
         backend=Backend(args.backend),
-        workspace=args.workspace,
+        workspace=args.workspace.resolve(),
         max_remediation_rounds=args.max_remediation_rounds,
     )
     config.validate()

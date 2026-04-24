@@ -77,9 +77,12 @@ python main.py --workspace ./my-research-project
 ```
 
 ### Workspace Structure
-- `workspace/plan.json`: The Lead's decomposition of the research brief.
-- `workspace/findings/`: Individual `.md` files containing raw research from each subagent.
-- `workspace/report.md`: The final synthesized research report.
+
+Each research session is organized into a unique subfolder within the workspace directory (e.g., `workspace/my-topic-20260424-123456/`):
+
+- `.../plan.json`: The Lead's decomposition of the research brief.
+- `.../findings/`: Individual `.md` files containing raw research from each subagent.
+- `.../report.md`: The final synthesized research report.
 
 ## 📂 Examples
 

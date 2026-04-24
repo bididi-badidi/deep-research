@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
+from utils import get_safe_path
+
 # Project-level references directory (read-only, not scoped to workspace).
 REFERENCES_DIR = Path(__file__).parent / "references"
 
@@ -109,26 +111,19 @@ def list_tool_profiles() -> dict[str, list[str]]:
 async def execute(name: str, args: dict, workspace: Path) -> str:
     """Execute a filesystem tool within the sandboxed workspace."""
     ws = workspace.resolve()
-
-    def _safe_path(rel_path: str) -> Path:
-        target = (ws / rel_path).resolve()
-        if not target.is_relative_to(ws):
-            raise PermissionError(f"path escapes workspace: {rel_path}")
-        return target
-
     try:
         if name == "read_file":
-            target = _safe_path(args["path"])
+            target = get_safe_path(args["path"], ws)
             return await asyncio.to_thread(target.read_text)
 
         if name == "write_file":
-            target = _safe_path(args["path"])
+            target = get_safe_path(args["path"], ws)
             await asyncio.to_thread(target.parent.mkdir, parents=True, exist_ok=True)
             await asyncio.to_thread(target.write_text, args["content"])
             return f"Written to {args['path']}"
 
         if name == "list_files":
-            target = _safe_path(args["path"])
+            target = get_safe_path(args["path"], ws)
             if not await asyncio.to_thread(target.is_dir):
                 return f"Error: {args['path']} is not a directory"
 
