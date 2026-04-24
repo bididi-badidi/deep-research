@@ -1,0 +1,34 @@
+RESEARCH BRIEF
+Brief ID : RB-20240523-001
+Created : May 23, 2024
+Status : Awaiting Research Lead
+
+RESEARCH QUESTION
+Primary question : What are the new Copilot features announced for Windows and Office 365 in the last 3 months, and what has been the public/market response to these updates?
+PICO breakdown :
+Population : Microsoft Copilot (Windows and Office 365 ecosystems)
+Intervention : Feature announcements and updates within the last 3 months
+Comparator : Public/crowd response (sentiment analysis)
+Outcome : A synthesis of new capabilities and an evaluation of US-based reception
+Time frame : Last 3 months
+
+SCOPE
+Time period : Last 3 months (approx. Feb 2024 – May 2024)
+Geography : United States
+Must include : All versions (Pro, M365, Windows), all industry applications
+Must exclude : None (comprehensive)
+
+OUTPUT REQUIREMENTS
+Format : Full report with citations
+Length : Approximately 3 pages
+Audience : Student
+
+SOURCE PREFERENCES
+Prioritise : Credible sources (Official Microsoft blogs, reputable tech news, business journals)
+Avoid : Not specified (none)
+
+URGENCY
+Deadline : No specific deadline (standard)
+Priority topic : Equal weight on features and response
+
+VALIDATED BY USER : Yes

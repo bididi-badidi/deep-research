@@ -16,8 +16,8 @@ class Config:
     workspace: Path = field(default_factory=lambda: Path("./workspace"))
 
     receptionist_model: str = "gemini-3-flash-preview"
-    lead_model: str = "gemini-3-pro-preview"
-    subagent_model: str = "gemini-3-pro-preview"
+    lead_model: str = "gemini-3-flash-preview"
+    subagent_model: str = "gemini-3-flash-preview"
 
     # Limits
     max_subagents: int = 15
