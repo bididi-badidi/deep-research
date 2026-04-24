@@ -75,6 +75,7 @@ async def main() -> None:
             return
     else:
         from agents import receptionist
+
         brief = await receptionist.run(config)
 
     # Generate a unique research ID based on the topic

@@ -169,7 +169,9 @@ def get_safe_path(requested_path: str | Path, workspace: Path) -> Path:
     target = (ws / requested_path).resolve()
 
     if not target.is_relative_to(ws):
-        raise PermissionError(f"Access denied: Path '{requested_path}' escapes the workspace.")
+        raise PermissionError(
+            f"Access denied: Path '{requested_path}' escapes the workspace."
+        )
 
     return target
 

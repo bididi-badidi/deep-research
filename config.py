@@ -26,7 +26,9 @@ class Config:
     max_subagents: int = field(
         default_factory=lambda: int(os.getenv("MAX_SUBAGENTS", "15"))
     )
-    max_tokens: int = field(default_factory=lambda: int(os.getenv("MAX_TOKENS", "16384")))
+    max_tokens: int = field(
+        default_factory=lambda: int(os.getenv("MAX_TOKENS", "16384"))
+    )
     max_remediation_rounds: int = field(
         default_factory=lambda: int(os.getenv("MAX_REMEDIATION_ROUNDS", "5"))
     )
@@ -61,9 +63,7 @@ class Config:
 
         # 3. Resolve Subagent Model
         if self.subagent_model is None:
-            self.subagent_model = os.getenv(
-                "SUBAGENT_MODEL", "gemini-3-flash-preview"
-            )
+            self.subagent_model = os.getenv("SUBAGENT_MODEL", "gemini-3-flash-preview")
 
     def validate(self) -> None:
         """Validate configuration constraints and required environment variables."""
