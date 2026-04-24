@@ -75,6 +75,12 @@ async def run(config: Config) -> dict:
             '{"topic": "...", "scope": "...", "questions": "1. ...", "depth": "moderate"}\n'
             "Do NOT omit the JSON when the user confirms. The pipeline cannot proceed without it."
         )
+    else:
+        system_prompt += (
+            "\n\nIMPORTANT: Once the user explicitly CONFIRMS the research brief, "
+            "you MUST call the `submit_brief` tool to hand off to the Research Lead. "
+            "Do not just state that you are handing off; you must actually execute the tool call."
+        )
 
     while brief is None:
         # The provider handles the tool-use loop (e.g. if the model calls submit_brief)
@@ -147,6 +153,25 @@ async def run_with_queue(
     provider = get_provider(config.backend, provider_name)
     system_prompt = load_prompt("receptionist")
 
+    if config.backend == Backend.CLI:
+        system_prompt += (
+            "\n\nIMPORTANT: In this environment, custom tools like `submit_brief` are unavailable. "
+            "Follow the normal intake checklist and present the text-format brief as usual. "
+            "However, once the user explicitly CONFIRMS the brief (e.g. says 'yes', 'looks good', 'proceed'), "
+            "your response MUST end with a raw JSON object (no markdown code fences) on its own line. "
+            'The JSON MUST have these exact keys: "topic", "scope", "questions", "depth", '
+            'and optionally "output_preferences". '
+            "Example of the required JSON suffix:\n"
+            '{"topic": "...", "scope": "...", "questions": "1. ...", "depth": "moderate"}\n'
+            "Do NOT omit the JSON when the user confirms. The pipeline cannot proceed without it."
+        )
+    else:
+        system_prompt += (
+            "\n\nIMPORTANT: Once the user explicitly CONFIRMS the research brief, "
+            "you MUST call the `submit_brief` tool to hand off to the Research Lead. "
+            "Do not just state that you are handing off; you must actually execute the tool call."
+        )
+
     initial_input = await in_q.get()
     messages.append({"role": "user", "content": initial_input})
 
@@ -171,6 +196,15 @@ async def run_with_queue(
             await out_q.put(closing)
             await on_brief(brief)
             break
+
+        # Fallback for CLI or if model outputs JSON instead of calling tool
+        if response_text:
+            parsed = extract_json(response_text)
+            if isinstance(parsed, dict) and "topic" in parsed:
+                brief = parsed
+                await out_q.put(response_text)
+                await on_brief(brief)
+                break
 
         # Always put something in out_q so send_message doesn't block forever
         await out_q.put(response_text or "*(no response from model)*")

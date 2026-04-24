@@ -104,6 +104,11 @@ async def plan(config: Config, brief: dict) -> list[dict]:
             '4. "search_hints" (list of suggested search queries), '
             '5. "tool_profile" (one of: "full", "read_only", "write_only", "search_only").'
         )
+    else:
+        system_prompt += (
+            "\n\nIMPORTANT: Once the research plan is ready, you MUST call the `create_plan` tool. "
+            "Do not just state the plan in text; you must actually execute the tool call."
+        )
 
     response_text = await provider(
         model=model_name,
@@ -180,6 +185,11 @@ async def synthesize(config: Config) -> str:
             '"tasks": [{"id": "<slug>", "title": "<title>", "objective": "<instructions>", '
             '"search_hints": ["<query1>"], "tool_profile": "full"}]}\n'
             "Do NOT mix JSON and markdown in the same response."
+        )
+    else:
+        system_prompt += (
+            "\n\nIMPORTANT: If you need to dispatch more subagents for remediation, you MUST call the `dispatch_subagents` tool. "
+            "Do not just state that you need more research; you must actually execute the tool call."
         )
 
     current_round = 0
