@@ -6,7 +6,12 @@ from pathlib import Path
 
 # Path to the scripts directory relative to this file
 SCRIPTS_DIR = Path(__file__).parent / "scripts"
-DEBUG_LOGGING = os.getenv("SANDBOXED_TOOLS_DEBUG", "").lower() in ("1", "true", "yes", "on")
+DEBUG_LOGGING = os.getenv("SANDBOXED_TOOLS_DEBUG", "").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
 
 
 def log(msg):
