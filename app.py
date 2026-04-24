@@ -12,6 +12,9 @@ Architecture:
 from __future__ import annotations
 
 import asyncio
+import os
+import platform
+import subprocess
 from pathlib import Path
 
 import gradio as gr
@@ -23,6 +26,39 @@ from main import run_pipeline
 load_dotenv()
 
 WORKSPACE = Path(__file__).parent / "workspace"
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+def _list_workspace_files(workspace: Path) -> list[str]:
+    files: list[str] = []
+    if (workspace / "report.md").exists():
+        files.append("report.md")
+    findings = workspace / "findings"
+    if findings.exists():
+        files += sorted(f.name for f in findings.glob("*.md"))
+    return files
+
+
+def _read_file(filename: str, workspace: Path) -> str:
+    if not filename:
+        return ""
+    path = workspace / (
+        "report.md" if filename == "report.md" else f"findings/{filename}"
+    )
+    return path.read_text(encoding="utf-8") if path.exists() else f"*File not found: {filename}*"
+
+
+def _open_folder(workspace: Path):
+    """Open the workspace folder in the OS file explorer."""
+    path = str(workspace.resolve())
+    if platform.system() == "Windows":
+        os.startfile(path)
+    elif platform.system() == "Darwin":
+        subprocess.run(["open", path])
+    else:
+        subprocess.run(["xdg-open", path])
 
 
 # ── Wrapper: run_pipeline → log_q ─────────────────────────────────────────────
@@ -133,7 +169,10 @@ def build_app() -> gr.Blocks:
         # ── Bottom: file viewer (hidden until done) ───────────────────────
         with gr.Row(visible=False) as file_panel:
             with gr.Column():
-                gr.Markdown("### Output Files")
+                with gr.Row():
+                    gr.Markdown("### Output Files")
+                    open_folder_btn = gr.Button("📂 Open Workspace Folder", scale=1)
+
                 with gr.Row():
                     file_dropdown = gr.Dropdown(
                         label="Select file",
@@ -236,7 +275,7 @@ def build_app() -> gr.Blocks:
                     log_text,
                     s,
                     gr.update(),
-                    gr.update(visible=False),
+                    gr.update(),  # keep visibility as is
                     gr.update(active=False),
                     gr.update(),
                 )
@@ -254,7 +293,7 @@ def build_app() -> gr.Blocks:
             if lines:
                 log_text = (log_text + "\n" + "\n".join(lines)).lstrip("\n")
 
-            if done:
+            if done or s["phase"] == "done":
                 choices = _list_workspace_files(s["workspace"])
                 return (
                     log_text,
@@ -269,7 +308,7 @@ def build_app() -> gr.Blocks:
                 log_text,
                 s,
                 gr.update(),
-                gr.update(visible=False),
+                gr.update(),  # keep visibility as is
                 gr.update(active=True),
                 gr.update(),
             )
@@ -280,6 +319,9 @@ def build_app() -> gr.Blocks:
         def refresh_files(s: dict):
             choices = _list_workspace_files(s["workspace"])
             return gr.update(choices=choices, value=choices[0] if choices else None)
+
+        def open_workspace(s: dict):
+            _open_folder(s["workspace"])
 
         # ── Wire events ───────────────────────────────────────────────────
 
@@ -311,6 +353,10 @@ def build_app() -> gr.Blocks:
             refresh_files,
             inputs=[state],
             outputs=[file_dropdown],
+        )
+        open_folder_btn.click(
+            open_workspace,
+            inputs=[state],
         )
 
     return demo
