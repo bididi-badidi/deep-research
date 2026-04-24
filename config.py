@@ -15,9 +15,9 @@ class Config:
     backend: Backend = Backend.API
     workspace: Path = field(default_factory=lambda: Path("./workspace"))
 
-    receptionist_model: str = "gemini-3-flash-preview"
-    lead_model: str = "gemini-3-pro-preview"
-    subagent_model: str = "gemini-3-pro-preview"
+    receptionist_model: str | None = None
+    lead_model: str | None = None
+    subagent_model: str = "gemini-3-flash-preview"
 
     # Limits
     max_subagents: int = 15
