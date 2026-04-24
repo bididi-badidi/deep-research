@@ -128,35 +128,83 @@ def _read_file(filename: str, workspace: Path) -> str:
 # ── Gradio app ────────────────────────────────────────────────────────────────
 
 
+CSS = """
+.gradio-container {
+    background: linear-gradient(135deg, #020617 0%, #0f172a 100%) !important;
+    background-attachment: fixed !important;
+    min-height: 100vh !important;
+}
+
+.glass-card {
+    background: rgba(15, 23, 42, 0.3) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.1) !important;
+    border-radius: 1.5rem !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.glass-chatbot {
+    # background: rgba(255, 255, 255, 0.02) !important;
+    border-radius: 1rem !important;
+}
+
+/* Make text more readable on dark backgrounds */
+h1, h3, p, span, label {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Polish input fields and buttons */
+input, textarea, .secondary, button {
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    color: white !important;
+    border-radius: 0.75rem !important;
+}
+
+button.primary {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+    border: none !important;
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4) !important;
+}
+
+button.primary:hover {
+    box-shadow: 0 0 25px rgba(14, 165, 233, 0.6) !important;
+    transform: translateY(-1px);
+}
+"""
+
+
 def build_app() -> gr.Blocks:
-    with gr.Blocks(title="Deep Research Demo", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="Deep Research Demo", theme=gr.themes.Soft(), css=CSS) as demo:
         state = gr.State(_new_state)
 
         gr.Markdown("# Deep Research Demo")
-        gr.Markdown("Multi-agent research system")
+        gr.Markdown("Multi-agent research system with real-time grounding.")
 
         with gr.Row():
             # ── Left: receptionist chat ───────────────────────────────────
-            with gr.Column(scale=1):
-                gr.Markdown("### Receptionist")
+            with gr.Column(scale=1, elem_classes="glass-card"):
+                gr.Markdown("### 🤖 Receptionist")
                 chatbot = gr.Chatbot(
                     height=420,
                     show_label=False,
                     layout="bubble",
+                    elem_classes="glass-chatbot"
                 )
                 with gr.Row():
                     user_input = gr.Textbox(
                         placeholder="Describe your research topic…",
                         show_label=False,
                         scale=5,
-                        submit_btn=False,
                     )
                     send_btn = gr.Button("Send", scale=1, variant="primary")
                 status_md = gr.Markdown("", container=False)
 
             # ── Right: pipeline log ───────────────────────────────────────
-            with gr.Column(scale=1):
-                gr.Markdown("### Pipeline Log")
+            with gr.Column(scale=1, elem_classes="glass-card"):
+                gr.Markdown("### 📜 Pipeline Log")
                 log_box = gr.Textbox(
                     value="",
                     show_label=False,
@@ -167,11 +215,11 @@ def build_app() -> gr.Blocks:
                 )
 
         # ── Bottom: file viewer (hidden until done) ───────────────────────
-        with gr.Row(visible=False) as file_panel:
+        with gr.Row(visible=False, elem_classes="glass-card") as file_panel:
             with gr.Column():
                 with gr.Row():
-                    gr.Markdown("### Output Files")
-                    open_folder_btn = gr.Button("📂 Open Workspace Folder", scale=1)
+                    gr.Markdown("### 📂 Output Files")
+                    open_folder_btn = gr.Button("Open Workspace Folder", scale=1)
 
                 with gr.Row():
                     file_dropdown = gr.Dropdown(
@@ -180,7 +228,7 @@ def build_app() -> gr.Blocks:
                         scale=4,
                         interactive=True,
                     )
-                    refresh_btn = gr.Button("⟳ Refresh", scale=1)
+                    refresh_btn = gr.Button("Refresh", scale=1)
                 file_content = gr.Markdown(value="", height=600)
 
         # ── Polling timer (activated after brief is submitted) ────────────
@@ -275,7 +323,7 @@ def build_app() -> gr.Blocks:
                     log_text,
                     s,
                     gr.update(),
-                    gr.update(),  # keep visibility as is
+                    gr.update(visible=False),
                     gr.update(active=False),
                     gr.update(),
                 )
@@ -293,7 +341,7 @@ def build_app() -> gr.Blocks:
             if lines:
                 log_text = (log_text + "\n" + "\n".join(lines)).lstrip("\n")
 
-            if done or s["phase"] == "done":
+            if done:
                 choices = _list_workspace_files(s["workspace"])
                 return (
                     log_text,
@@ -308,7 +356,7 @@ def build_app() -> gr.Blocks:
                 log_text,
                 s,
                 gr.update(),
-                gr.update(),  # keep visibility as is
+                gr.update(visible=False),
                 gr.update(active=True),
                 gr.update(),
             )
@@ -319,9 +367,6 @@ def build_app() -> gr.Blocks:
         def refresh_files(s: dict):
             choices = _list_workspace_files(s["workspace"])
             return gr.update(choices=choices, value=choices[0] if choices else None)
-
-        def open_workspace(s: dict):
-            _open_folder(s["workspace"])
 
         # ── Wire events ───────────────────────────────────────────────────
 
@@ -353,10 +398,6 @@ def build_app() -> gr.Blocks:
             refresh_files,
             inputs=[state],
             outputs=[file_dropdown],
-        )
-        open_folder_btn.click(
-            open_workspace,
-            inputs=[state],
         )
 
     return demo
