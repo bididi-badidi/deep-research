@@ -343,7 +343,7 @@ async def synthesize(config: Config) -> str:
         clean_report = result
         if "```markdown" in clean_report:
             clean_report = clean_report.split("```markdown")[1].split("```")[0].strip()
-        elif "```" in clean_report:
+        elif clean_report.startswith("```"):
             # Check if it looks like a code block starting at the beginning
             parts = clean_report.split("```")
             if len(parts) >= 3:
@@ -357,4 +357,3 @@ async def synthesize(config: Config) -> str:
 
     return result
 
-    return result

@@ -112,7 +112,6 @@ async def run(
                     function_response=types.FunctionResponse(
                         name=fc.name,
                         response={"result": result},
-                        id=getattr(fc, "id", None),
                     )
                 )
             )

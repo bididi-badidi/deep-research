@@ -212,8 +212,6 @@ async def run_with_queue(
 
         # Always put something in out_q so send_message doesn't block forever
         await out_q.put(response_text or "*(no response from model)*")
-        if response_text:
-            messages.append({"role": "assistant", "content": response_text})
 
         user_input = await in_q.get()
         if user_input.strip().lower() in ("quit", "exit", "q"):

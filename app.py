@@ -291,9 +291,9 @@ def build_app() -> gr.Blocks:
             # Forward user message to the receptionist task
             await s["in_q"].put(user_msg)
 
-            # Await the receptionist's reply (up to 2 min)
+            # Await the receptionist's reply (up to 5 min)
             try:
-                response = await asyncio.wait_for(s["out_q"].get(), timeout=120)
+                response = await asyncio.wait_for(s["out_q"].get(), timeout=300)
             except asyncio.TimeoutError:
                 response = "*(timeout — model took too long to respond)*"
 
