@@ -27,6 +27,15 @@ class TestExtractJson(unittest.TestCase):
         text = 'Pre { "a": { "b": 1 } } Post'
         self.assertEqual(extract_json(text), {"a": {"b": 1}})
 
+    def test_direct_non_string_inputs(self):
+        # Test with list
+        data_list = [{"id": "task1"}]
+        self.assertEqual(extract_json(data_list), data_list)
+
+        # Test with dict
+        data_dict = {"tasks": []}
+        self.assertEqual(extract_json(data_dict), data_dict)
+
     def test_invalid_json(self):
         text = "This is not JSON { incomplete: "
         self.assertIsNone(extract_json(text))

@@ -75,6 +75,12 @@ async def run(config: Config) -> dict:
             '{"topic": "...", "scope": "...", "questions": "1. ...", "depth": "moderate"}\n'
             "Do NOT omit the JSON when the user confirms. The pipeline cannot proceed without it."
         )
+    else:
+        system_prompt += (
+            "\n\nIMPORTANT: Once the user explicitly CONFIRMS the research brief, "
+            "you MUST call the `submit_brief` tool to hand off to the Research Lead. "
+            "Do not just state that you are handing off; you must actually execute the tool call."
+        )
 
     while brief is None:
         # The provider handles the tool-use loop (e.g. if the model calls submit_brief)
@@ -109,6 +115,7 @@ async def run(config: Config) -> dict:
         # If the model didn't call submit_brief, show its text and wait for user input
         if response_text:
             print(f"\nAssistant: {response_text}")
+            messages.append({"role": "assistant", "content": response_text})
 
         # Wait for user input
         user_input = await asyncio.to_thread(input, "\nYou: ")
@@ -118,4 +125,97 @@ async def run(config: Config) -> dict:
 
     print("\n--- Research brief compiled ---")
     print(json.dumps(brief, indent=2))
+    return brief
+
+
+async def run_with_queue(
+    config: Config,
+    in_q: asyncio.Queue,
+    out_q: asyncio.Queue,
+    on_brief,
+) -> dict:
+    """Queue-based receptionist for programmatic (Gradio) integration.
+
+    Replaces stdin/stdout with asyncio Queues so any UI can drive the
+    conversation.  ``on_brief`` is an async callable invoked with the
+    completed brief dict once ``submit_brief`` is called by the model.
+    """
+    messages: list[dict] = []
+    brief: dict | None = None
+
+    async def tool_executor(name: str, args: dict) -> str:
+        nonlocal brief
+        if name == "submit_brief":
+            brief = args
+            return "Brief submitted successfully. The research team will begin shortly."
+        return f"Unknown tool: {name}"
+
+    provider_name = get_provider_name(config.receptionist_model)
+    provider = get_provider(config.backend, provider_name)
+    system_prompt = load_prompt("receptionist")
+
+    if config.backend == Backend.CLI:
+        system_prompt += (
+            "\n\nIMPORTANT: In this environment, custom tools like `submit_brief` are unavailable. "
+            "Follow the normal intake checklist and present the text-format brief as usual. "
+            "However, once the user explicitly CONFIRMS the brief (e.g. says 'yes', 'looks good', 'proceed'), "
+            "your response MUST end with a raw JSON object (no markdown code fences) on its own line. "
+            'The JSON MUST have these exact keys: "topic", "scope", "questions", "depth", '
+            'and optionally "output_preferences". '
+            "Example of the required JSON suffix:\n"
+            '{"topic": "...", "scope": "...", "questions": "1. ...", "depth": "moderate"}\n'
+            "Do NOT omit the JSON when the user confirms. The pipeline cannot proceed without it."
+        )
+    else:
+        system_prompt += (
+            "\n\nIMPORTANT: Once the user explicitly CONFIRMS the research brief, "
+            "you MUST call the `submit_brief` tool to hand off to the Research Lead. "
+            "Do not just state that you are handing off; you must actually execute the tool call."
+        )
+
+    initial_input = await in_q.get()
+    messages.append({"role": "user", "content": initial_input})
+
+    while True:
+        try:
+            response_text = await provider(
+                model=config.receptionist_model,
+                system=system_prompt,
+                messages=messages,
+                tools=[SUBMIT_BRIEF_TOOL],
+                tool_executor=tool_executor,
+                max_tokens=1024,
+                session_id=None,
+                tool_profile="search_only",
+            )
+        except Exception as exc:
+            await out_q.put(f"*(Receptionist error: {exc})*")
+            return {}
+
+        if brief is not None:
+            closing = (
+                response_text
+                or "Brief submitted! The research team will begin shortly."
+            )
+            await out_q.put(closing)
+            await on_brief(brief)
+            break
+
+        # Fallback for CLI or if model outputs JSON instead of calling tool
+        if response_text:
+            parsed = extract_json(response_text)
+            if isinstance(parsed, dict) and "topic" in parsed:
+                brief = parsed
+                await out_q.put(response_text)
+                await on_brief(brief)
+                break
+
+        # Always put something in out_q so send_message doesn't block forever
+        await out_q.put(response_text or "*(no response from model)*")
+
+        user_input = await in_q.get()
+        if user_input.strip().lower() in ("quit", "exit", "q"):
+            raise KeyboardInterrupt("User cancelled intake.")
+        messages.append({"role": "user", "content": user_input})
+
     return brief

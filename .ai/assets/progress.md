@@ -3,6 +3,11 @@
 ## Current Task
 
 - [ ] Task 4.1 — [Automated Review and PR](.ai/assets/phases/phase4_automated_review_and_pr.md)
+- [ ] Phase 3: Iterative Deepening & Dynamic Tool Assignment
+    - [ ] Task 3.8 — Testing & Verification
+- [ ] Gradio Demo
+    - [x] Add `run_with_queue()` to `agents/receptionist.py`
+    - [x] Create `app.py` (Gradio UI)
 
 ## Upcoming
 

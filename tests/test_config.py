@@ -3,6 +3,20 @@ from pathlib import Path
 from config import Config, Backend
 
 
+@pytest.fixture(autouse=True)
+def clear_env(monkeypatch):
+    """Ensure tests are not affected by local .env or environment variables."""
+    monkeypatch.delenv("RECEPTIONIST_MODEL", raising=False)
+    monkeypatch.delenv("LEAD_MODEL", raising=False)
+    monkeypatch.delenv("SUBAGENT_MODEL", raising=False)
+    monkeypatch.delenv("WORKSPACE", raising=False)
+    monkeypatch.delenv("MAX_SUBAGENTS", raising=False)
+    monkeypatch.delenv("MAX_TOKENS", raising=False)
+    monkeypatch.delenv("MAX_REMEDIATION_ROUNDS", raising=False)
+    monkeypatch.delenv("TIMEOUT_SECONDS", raising=False)
+    monkeypatch.delenv("VERBOSE", raising=False)
+
+
 def test_config_defaults():
     cfg = Config()
     assert cfg.backend == Backend.API

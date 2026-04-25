@@ -32,6 +32,9 @@ breakdown.save
 *.swp
 *.swo
 
+# Macos
+.DS_Store
+
 # Ignore AI agent transient scratchpads and scripts
 .ai/assets/session_notes.md
 .ai/assets/branches/
