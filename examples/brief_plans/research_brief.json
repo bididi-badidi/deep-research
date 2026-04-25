@@ -1,0 +1,46 @@
+{
+  "brief_id": "RB-20260424-001",
+  "topic": "Comparative analysis of open-source LLM evaluation frameworks for RAG hallucination detection",
+  "question": "How do the top three open-source LLM evaluation frameworks (HELM, DeepEval, and RAGAS) compare in their ability to detect hallucinations in RAG pipelines as of early 2026?",
+  "pico_breakdown": {
+    "population": "Open-source LLM evaluation frameworks.",
+    "intervention": "Ability to detect hallucinations in RAG pipelines.",
+    "comparator": "Comparative analysis between HELM, DeepEval, and RAGAS.",
+    "outcome": "Accuracy metrics, ease of integration, and latency benchmarks.",
+    "time_frame": "January 2024 – March 2026."
+  },
+  "scope": {
+    "time_period": "2024–2026 (Focus on the most recent 12 months)",
+    "geography": "Global / English-speaking research and development",
+    "must_include": [
+      "Comparison of metric types (model-based vs. deterministic)",
+      "Cost-of-run estimates",
+      "Support for multi-modal evaluation"
+    ],
+    "must_exclude": [
+      "Closed-source/proprietary evaluation services (e.g., Giskard SaaS, Weights & Biases proprietary features)"
+    ]
+  },
+  "output_requirements": {
+    "format": "Full report with citations and a technical comparative table",
+    "length": "Approximately 2,000 words",
+    "audience": "Senior Machine Learning Engineers and Technical Architects"
+  },
+  "sources": {
+    "prioritise": [
+      "Peer-reviewed papers from ArXiv (2025+)",
+      "Official GitHub documentation",
+      "Technical engineering blogs from reputable AI labs (e.g., Anthropic, Meta, Mistral)"
+    ],
+    "avoid": [
+      "General tech news sites (TechCrunch, Verge)",
+      "Outdated 2023-era comparisons"
+    ]
+  },
+  "urgency": {
+    "deadline": "2026-04-29",
+    "priority": "High",
+    "priority_topic": "Hallucination detection accuracy benchmarks"
+  },
+  "validated_by_user": true
+}

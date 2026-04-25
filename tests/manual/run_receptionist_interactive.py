@@ -22,7 +22,7 @@ async def main():
     load_dotenv()
     config = Config(
         backend=Backend.CLI,
-        workspace=Path("./workspace_receptionist_test"),
+        workspace=Path("./tests/workspace/receptionist"),
         subagent_model="gemini-3-flash-preview",
         max_tokens=2048,
     )

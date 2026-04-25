@@ -1,0 +1,38 @@
+[
+  {
+    "id": "framework-baseline",
+    "title": "Technical Architecture of HELM, DeepEval, and RAGAS",
+    "objective": "Document the core architecture and 'hallucination' metrics for HELM, DeepEval, and RAGAS. Identify the specific algorithms used (e.g., Faithfulness, Answer Relevancy, Context Precision) and their implementation status as of Q1 2026. Prioritize official documentation and GitHub source code.",
+    "search_hints": [
+      "HELM LLM evaluation framework hallucination metrics 2026",
+      "DeepEval G-Eval faithfulness metric implementation",
+      "RAGAS metrics for RAG hallucination detection 2025 2026",
+      "github.com/explodinggradients/ragas hallucination logic"
+    ],
+    "tool_profile": "full"
+  },
+  {
+    "id": "accuracy-benchmarks",
+    "title": "Comparative Accuracy & Sensitivity Analysis",
+    "objective": "Find recent (2025-2026) benchmark studies or ArXiv papers comparing the sensitivity of these frameworks in detecting ground-truth hallucinations. Extract F1 scores or Correlation with Human Judgment (Meta-evaluation) metrics.",
+    "search_hints": [
+      "arxiv.org LLM evaluation framework comparison 2025",
+      "benchmark RAGAS vs DeepEval vs HELM accuracy",
+      "LLM-as-a-judge correlation with human judgment benchmarks 2026",
+      "hallucination detection leaderboard open-source frameworks"
+    ],
+    "tool_profile": "full"
+  },
+  {
+    "id": "operational-metrics",
+    "title": "Integration, Latency, and Cost-of-Run",
+    "objective": "Research operational aspects including typical latency per evaluation run, token consumption costs (when using LLM-as-a-judge), and ease of CI/CD integration. Focus on developer experience and multi-modal support.",
+    "search_hints": [
+      "DeepEval vs RAGAS latency benchmarks",
+      "HELM evaluation run cost estimate tokens",
+      "integrating RAGAS in GitHub Actions pipeline example",
+      "multi-modal RAG evaluation support frameworks 2026"
+    ],
+    "tool_profile": "full"
+  }
+]

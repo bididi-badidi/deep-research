@@ -10,11 +10,11 @@ from config import Config, Backend
 from agents import lead, subagent
 
 
-async def run_remediation_test():
+async def run_error_recovery_test():
     load_dotenv()
 
     # Use a specific workspace for this test
-    workspace_path = Path("./tests/workspace_test")
+    workspace_path = Path("./tests/workspace")
     if workspace_path.exists():
         import shutil
 
@@ -44,16 +44,16 @@ async def run_remediation_test():
     }
 
     print("\n" + "=" * 50)
-    print("  [REMEDIATION TEST] STARTING CLI TEST")
+    print("  [ERROR RECOVERY TEST] STARTING CLI TEST")
     print("=" * 50)
 
-    print("\n--- [REMEDIATION TEST] Planning ---")
+    print("\n--- [ERROR RECOVERY TEST] Planning ---")
     tasks = await lead.plan(cfg, brief)
     print(f"Created {len(tasks)} tasks:")
     for t in tasks:
         print(f"  - {t['id']}: {t['title']} (Profile: {t.get('tool_profile', 'full')})")
 
-    print("\n--- [REMEDIATION TEST] Executing Initial Subagents ---")
+    print("\n--- [ERROR RECOVERY TEST] Executing Initial Subagents ---")
     # Run in parallel
     results = await asyncio.gather(
         *(subagent.run(cfg, task) for task in tasks), return_exceptions=True
@@ -66,7 +66,7 @@ async def run_remediation_test():
         if isinstance(result, Exception):
             print(f"    Error: {result}")
 
-    print("\n--- [REMEDIATION TEST] Synthesizing (Remediation possible) ---")
+    print("\n--- [ERROR RECOVERY TEST] Synthesizing (Recovery possible) ---")
     # This will call synthesize(), which handles remediation internally
     # In CLI mode, synthesize() uses a loop to handle remediation
     await lead.synthesize(cfg)
@@ -80,4 +80,4 @@ async def run_remediation_test():
 
 
 if __name__ == "__main__":
-    asyncio.run(run_remediation_test())
+    asyncio.run(run_error_recovery_test())

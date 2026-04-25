@@ -11,9 +11,9 @@ All tests run against the real Gemini CLI.  User input is simulated via
 `unittest.mock.patch('builtins.input', side_effect=[...])`.
 
 Usage:
-    python tests/manual/test_receptionist.py          # run all tests
-    python tests/manual/test_receptionist.py tc1      # single test
-    python tests/manual/test_receptionist.py tc5      # integration (receptionist → lead)
+    python tests/manual/run_receptionist_suite.py          # run all tests
+    python tests/manual/run_receptionist_suite.py tc1      # single test
+    python tests/manual/run_receptionist_suite.py tc5      # integration (receptionist → lead)
 
 Flags:
     --keep   keep the test workspace after a run (default: delete on pass)
@@ -41,7 +41,7 @@ from agents import receptionist, lead
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-WORKSPACE = Path("./workspace_receptionist_test")
+WORKSPACE = Path("./tests/workspace/receptionist")
 
 REQUIRED_BRIEF_KEYS = {"topic", "scope", "questions", "depth"}
 
@@ -352,7 +352,7 @@ async def main():
         print("\nWorkspace cleaned up.")
     else:
         print(f"\nWorkspace preserved at: {WORKSPACE.resolve()}")
-        print("Run `rm -rf workspace_receptionist_test` to clean up.")
+        print(f"Run `rm -rf {WORKSPACE}` to clean up.")
 
     if failed:
         sys.exit(1)

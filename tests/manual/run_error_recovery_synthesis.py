@@ -13,7 +13,7 @@ from agents import lead
 async def run_synthesis_only():
     load_dotenv()
 
-    workspace_path = Path("./tests/workspace_remediation_test")
+    workspace_path = Path("./tests/workspace")
     if not workspace_path.exists():
         print("Error: workspace not found!")
         return
