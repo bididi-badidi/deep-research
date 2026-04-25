@@ -36,9 +36,7 @@ class Config:
     max_subagents: int = field(
         default_factory=lambda: _get_env_int("MAX_SUBAGENTS", 15)
     )
-    max_tokens: int = field(
-        default_factory=lambda: _get_env_int("MAX_TOKENS", 16384)
-    )
+    max_tokens: int = field(default_factory=lambda: _get_env_int("MAX_TOKENS", 16384))
     max_remediation_rounds: int = field(
         default_factory=lambda: _get_env_int("MAX_REMEDIATION_ROUNDS", 5)
     )

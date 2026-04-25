@@ -31,7 +31,9 @@ def test_config_env_overrides(monkeypatch):
 
 def test_config_invalid_env_vars(monkeypatch):
     monkeypatch.setenv("MAX_TOKENS", "invalid")
-    with pytest.raises(ValueError, match="Environment variable MAX_TOKENS must be an integer"):
+    with pytest.raises(
+        ValueError, match="Environment variable MAX_TOKENS must be an integer"
+    ):
         Config()
 
 

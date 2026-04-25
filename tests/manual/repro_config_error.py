@@ -1,6 +1,7 @@
 import os
 from config import Config
 
+
 def test_config_invalid_env_var():
     os.environ["MAX_TOKENS"] = "not-an-int"
     print("Attempting to instantiate Config with MAX_TOKENS=not-an-int")
@@ -15,6 +16,7 @@ def test_config_invalid_env_var():
     finally:
         if "MAX_TOKENS" in os.environ:
             del os.environ["MAX_TOKENS"]
+
 
 if __name__ == "__main__":
     test_config_invalid_env_var()
