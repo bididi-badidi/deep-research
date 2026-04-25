@@ -103,31 +103,6 @@ def _new_state() -> dict:
     }
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-
-def _list_workspace_files(workspace: Path) -> list[str]:
-    files: list[str] = []
-    if (workspace / "report.md").exists():
-        files.append("report.md")
-    findings = workspace / "findings"
-    if findings.exists():
-        files += sorted(f.name for f in findings.glob("*.md"))
-    return files
-
-
-def _read_file(filename: str, workspace: Path) -> str:
-    if not filename:
-        return ""
-    path = workspace / (
-        "report.md" if filename == "report.md" else f"findings/{filename}"
-    )
-    return path.read_text() if path.exists() else f"*File not found: {filename}*"
-
-
-# ── Gradio app ────────────────────────────────────────────────────────────────
-
-
 CSS = """
 .gradio-container {
     background: linear-gradient(135deg, #020617 0%, #0f172a 100%) !important;

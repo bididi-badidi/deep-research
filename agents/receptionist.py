@@ -115,6 +115,7 @@ async def run(config: Config) -> dict:
         # If the model didn't call submit_brief, show its text and wait for user input
         if response_text:
             print(f"\nAssistant: {response_text}")
+            messages.append({"role": "assistant", "content": response_text})
 
         # Wait for user input
         user_input = await asyncio.to_thread(input, "\nYou: ")
@@ -208,6 +209,8 @@ async def run_with_queue(
 
         # Always put something in out_q so send_message doesn't block forever
         await out_q.put(response_text or "*(no response from model)*")
+        if response_text:
+            messages.append({"role": "assistant", "content": response_text})
 
         user_input = await in_q.get()
         if user_input.strip().lower() in ("quit", "exit", "q"):
