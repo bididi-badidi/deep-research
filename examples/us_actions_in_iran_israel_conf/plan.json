@@ -1,0 +1,50 @@
+[
+  {
+    "title": "US Military Actions and Posture (Apr 2024-Present)",
+    "tool_profile": "full",
+    "search_hints": [
+      "US military deployment Israel Iran 2024",
+      "US forces intercept Iranian missiles April 2024",
+      "US THAAD deployment Israel October 2024",
+      "CENTCOM Iran Israel actions"
+    ],
+    "objective": "Research and detail official US military actions regarding the Iran-Israel conflict from April 2024 to the present. Focus on asset deployments (e.g., naval carrier strike groups, THAAD batteries), direct defensive actions (e.g., interceptions of Iranian or proxy attacks), and military coordination. Capture exact dates for all events to support a chronological timeline. MUST EXCLUDE: US domestic political debates, campus protests, and Congressional funding battles. Provide a strictly factual list of military actions with high-quality citations.",
+    "id": "T-01"
+  },
+  {
+    "objective": "Research and detail official US diplomatic and economic actions regarding the Iran-Israel conflict from April 2024 to the present. Focus on new economic sanctions against Iran or proxies, UN Security Council votes/vetoes, official State Department summits, and ceasefire mediation efforts. Capture exact dates for the timeline. MUST EXCLUDE: US domestic political debates or domestic reactions. Provide findings with dates and citations.",
+    "id": "T-02",
+    "title": "US Diplomatic and Economic Actions (Apr 2024-Present)",
+    "tool_profile": "full",
+    "search_hints": [
+      "US sanctions Iran April 2024",
+      "Blinken Middle East trips 2024 Iran Israel",
+      "US UN Security Council Israel Iran 2024",
+      "US economic actions Iran 2024"
+    ]
+  },
+  {
+    "title": "WTI Oil Price Fluctuations & Geopolitical Correlation (Apr 2024-Present)",
+    "search_hints": [
+      "WTI crude oil price trend April 2024 present",
+      "oil price jump Iran Israel conflict 2024",
+      "WTI correlation Middle East tension 2024",
+      "energy markets reaction US Iran Israel"
+    ],
+    "tool_profile": "full",
+    "objective": "Analyze WTI crude oil price movements from April 2024 to the present. Identify major price spikes and drops, and correlate them directly with specific geopolitical events in the US-Iran-Israel conflict (e.g., the April 2024 Iranian strike, subsequent Israeli responses, US interventions). Document exact dates, WTI price points, and the consensus of energy analysts on how the conflict drove these prices. EXCLUDE: Non-geopolitical drivers (like US domestic inventory reports) unless necessary to explain a lack of correlation.",
+    "id": "T-03"
+  },
+  {
+    "objective": "Assess the broader global consequences of the US military, diplomatic, and economic actions in the Iran-Israel conflict since April 2024. Focus on international reactions (alliances, EU/Arab state responses), shifts in global trade routes (e.g., Red Sea shipping impacts tied to the broader conflict), and geopolitical realignments. EXCLUDE: US domestic impacts and global oil prices (covered by another task).",
+    "id": "T-04",
+    "search_hints": [
+      "global impact US intervention Iran Israel",
+      "international reaction US policy Iran Israel 2024",
+      "global trade shipping Iran Israel US 2024",
+      "diplomatic fallout US Middle East 2024"
+    ],
+    "tool_profile": "full",
+    "title": "Global Consequences of US Actions (Apr 2024-Present)"
+  }
+]
