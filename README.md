@@ -63,6 +63,7 @@ pip install -e .
 
 ## 📖 Usage
 
+### Command Line
 Run the main research pipeline:
 
 ```bash
@@ -74,6 +75,17 @@ python main.py --backend cli
 
 # Custom workspace
 python main.py --workspace ./my-research-project
+```
+
+### Gradio Interface
+A web-based GUI is available for interactive research:
+
+```bash
+# Using uv (recommended)
+uv run app.py
+
+# Using python
+python app.py
 ```
 
 ### Workspace Structure
@@ -88,6 +100,7 @@ Each research session is organized into a unique subfolder within the workspace 
 
 You can find sample research outputs in the `examples/` directory:
 - **[Microsoft AI Transformation (2023-2026)](examples/microsoft_research/report.md):** A comprehensive report on Microsoft's financial evolution, AI product integration (Copilot, Azure), and strategic institutional positioning.
+- **[US Actions on Iran-Israel Conflict (Apr-Nov 2024)](examples/us_actions_in_iran_israel_conf/report.md):** An analysis of US diplomatic and military responses to the Iran-Israel escalation and its correlation with global oil prices.
 
 ## 🧪 Development
 
