@@ -128,20 +128,10 @@ async def main() -> None:
 
         brief = await receptionist.run(config)
 
-    # Generate a unique research ID based on the topic
-    import re
-    from datetime import datetime
+    # Prepare the research workspace
+    from utils import initialize_research_workspace
 
-    topic_slug = re.sub(r"[^a-z0-9]+", "-", brief["topic"].lower()).strip("-")[:30]
-    if not topic_slug:
-        topic_slug = "research"
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    research_id = f"{topic_slug}-{timestamp}"
-
-    # Update workspace to task-specific folder
-    config.workspace = config.workspace / research_id
-    config.workspace.mkdir(parents=True, exist_ok=True)
-    (config.workspace / "findings").mkdir(exist_ok=True)
+    research_id = initialize_research_workspace(config, brief["topic"])
 
     print(f"\nResearch session ID: {research_id}")
     print(f"Workspace: {config.workspace}")

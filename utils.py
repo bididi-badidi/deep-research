@@ -80,12 +80,23 @@ def extract_json(text: str) -> Any:
     the absence of JSON gracefully (it returns None).
 
     Tries multiple strategies:
-    1. Direct parsing
-    2. Markdown code blocks (```json ... ```)
-    3. Finding outermost delimiters ([ ... ] or { ... })
+    1. If already a list or dict, return as is.
+    2. Direct parsing
+    3. Markdown code blocks (```json ... ```)
+    4. Finding outermost delimiters ([ ... ] or { ... })
     """
-    if not text:
+    if text is None:
         return None
+
+    if isinstance(text, (list, dict)):
+        return text
+
+    if not isinstance(text, str):
+        # Fallback for unexpected types
+        try:
+            return json.loads(str(text))
+        except Exception:
+            return None
 
     text = text.strip()
 
@@ -185,3 +196,32 @@ def get_provider_name(model_name: str) -> str:
         return "anthropic"
     # Fallback default
     return "gemini"
+
+
+def initialize_research_workspace(config: Any, topic: str) -> str:
+    """Generate a unique research ID and prepare the workspace directory.
+
+    Args:
+        config: The system configuration (Config object).
+        topic: The research topic (used to generate the slug).
+
+    Returns:
+        The generated research_id.
+    """
+    from datetime import datetime
+
+    # Ensure topic is a string
+    topic_str = str(topic) if topic is not None else "research"
+
+    topic_slug = re.sub(r"[^a-z0-9]+", "-", topic_str.lower()).strip("-")[:30]
+    if not topic_slug:
+        topic_slug = "research"
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    research_id = f"{topic_slug}-{timestamp}"
+
+    # Update workspace to task-specific folder
+    config.workspace = config.workspace / research_id
+    config.workspace.mkdir(parents=True, exist_ok=True)
+    (config.workspace / "findings").mkdir(exist_ok=True)
+
+    return research_id

@@ -279,8 +279,9 @@ findings into one claim without citing both sources.
 both with their respective sources. Use neutral framing:
 
 > "Source A found X, while Source B found Y. This discrepancy may reflect [methodology
+>
 > > difference / time period difference / geographic difference]."
-> Do not silently pick one side.
+> > Do not silently pick one side.
 
 **Represent gaps honestly.** If a sub-topic produced no evidence, say so in the
 relevant section or in a dedicated Limitations section. Do not omit a gap just because
@@ -361,6 +362,13 @@ APPENDIX E — Remediation Log (include only if remediation rounds occurred)
 [Each Remediation Request issued, what was requested, and what was returned.
  This gives the Research Lead and user full traceability of the pipeline.]
 ```
+
+---
+
+## Step 6 — Submitting Report
+
+- Use the write_file tool to store the full report as report.md.
+- Output a brief summary of report as response.
 
 ---
 

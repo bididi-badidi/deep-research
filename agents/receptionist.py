@@ -193,7 +193,10 @@ async def run_with_queue(
             return {}
 
         if brief is not None:
-            closing = response_text or "Brief submitted! The research team will begin shortly."
+            closing = (
+                response_text
+                or "Brief submitted! The research team will begin shortly."
+            )
             await out_q.put(closing)
             await on_brief(brief)
             break

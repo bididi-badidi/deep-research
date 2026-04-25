@@ -47,7 +47,11 @@ def _read_file(filename: str, workspace: Path) -> str:
     path = workspace / (
         "report.md" if filename == "report.md" else f"findings/{filename}"
     )
-    return path.read_text(encoding="utf-8") if path.exists() else f"*File not found: {filename}*"
+    return (
+        path.read_text(encoding="utf-8")
+        if path.exists()
+        else f"*File not found: {filename}*"
+    )
 
 
 def _open_folder(workspace: Path):
@@ -78,11 +82,14 @@ async def _run_pipeline_queued(
         for line in lines:
             if isinstance(line, str):
                 stripped = line.strip()
-                if stripped:
-                    try:
-                        log_q.put_nowait(stripped)
-                    except asyncio.QueueFull:
-                        pass
+            else:
+                stripped = str(line).strip()
+
+            if stripped:
+                try:
+                    log_q.put_nowait(stripped)
+                except asyncio.QueueFull:
+                    pass
 
     try:
         await run_pipeline(config, brief, on_log=_log)
@@ -172,7 +179,7 @@ def build_app() -> gr.Blocks:
                     height=420,
                     show_label=False,
                     layout="bubble",
-                    elem_classes="glass-chatbot"
+                    elem_classes="glass-chatbot",
                 )
                 with gr.Row():
                     user_input = gr.Textbox(
@@ -200,7 +207,7 @@ def build_app() -> gr.Blocks:
             with gr.Column():
                 with gr.Row():
                     gr.Markdown("### 📂 Output Files")
-                    open_folder_btn = gr.Button("Open Workspace Folder", scale=1)
+                    gr.Button("Open Workspace Folder", scale=1)
 
                 with gr.Row():
                     file_dropdown = gr.Dropdown(
@@ -240,10 +247,9 @@ def build_app() -> gr.Blocks:
                 return
 
             if s["phase"] == "idle":
-                # Bootstrap: create queues, workspace dirs, start receptionist task
+                # Bootstrap: create queues, base workspace dir, start receptionist task
                 workspace: Path = s["workspace"]
                 workspace.mkdir(parents=True, exist_ok=True)
-                (workspace / "findings").mkdir(exist_ok=True)
 
                 config = Config(workspace=workspace)
                 s["config"] = config
@@ -259,7 +265,19 @@ def build_app() -> gr.Blocks:
                 async def _on_brief(brief: dict) -> None:
                     s["brief"] = brief
                     s["phase"] = "researching"
-                    log_q.put_nowait("Brief received — starting pipeline…")
+
+                    # Initialize the specific research workspace
+                    from utils import initialize_research_workspace
+
+                    research_id = initialize_research_workspace(config, brief["topic"])
+                    s["workspace"] = (
+                        config.workspace
+                    )  # Update state workspace for file viewer
+
+                    log_q.put_nowait(f"Brief received: {brief['topic']}")
+                    log_q.put_nowait(f"Research session ID: {research_id}")
+                    log_q.put_nowait("Starting pipeline…")
+
                     s["pipeline_task"] = asyncio.create_task(
                         _run_pipeline_queued(config, brief, log_q)
                     )
