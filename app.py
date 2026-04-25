@@ -69,14 +69,20 @@ async def _run_pipeline_queued(
 ) -> None:
     """Adapts run_pipeline's on_log callback to push lines into log_q."""
 
-    def _log(msg: str) -> None:
-        for line in msg.splitlines():
-            stripped = line.strip()
-            if stripped:
-                try:
-                    log_q.put_nowait(stripped)
-                except asyncio.QueueFull:
-                    pass
+    def _log(msg: str | list[str]) -> None:
+        if isinstance(msg, list):
+            lines = msg
+        else:
+            lines = msg.splitlines()
+
+        for line in lines:
+            if isinstance(line, str):
+                stripped = line.strip()
+                if stripped:
+                    try:
+                        log_q.put_nowait(stripped)
+                    except asyncio.QueueFull:
+                        pass
 
     try:
         await run_pipeline(config, brief, on_log=_log)
