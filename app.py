@@ -221,7 +221,7 @@ def build_app() -> gr.Blocks:
         with gr.Row(visible=False) as workspace_row:
             with gr.Column(elem_classes="glass-card"):
                 with gr.Row():
-                    workspace_path_md = gr.Markdown("", container=False, scale=5)
+                    workspace_path_md = gr.Markdown("", container=False)
                     open_folder_btn = gr.Button(
                         "📁 Open Workspace Folder", scale=1, variant="primary"
                     )
