@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 async def test_cli_pipeline():
     load_dotenv()
     # Use a specific workspace for this example
-    workspace_path = Path("./tests/workspace_test")
+    workspace_path = Path("./tests/workspace")
     cfg = Config(backend=Backend.CLI, workspace=workspace_path)
     cfg.workspace.mkdir(parents=True, exist_ok=True)
     (cfg.workspace / "findings").mkdir(exist_ok=True)
