@@ -353,6 +353,21 @@ def build_app() -> gr.Blocks:
                     gr.update(),                            # file_dropdown
                 )
 
+            # If phase is already done from a prior tick, keep panels visible and
+            # ensure timer stays stopped (guards against in-flight tick race condition).
+            if s.get("phase") == "done":
+                choices = _list_workspace_files(s["workspace"])
+                workspace_path = str(s["workspace"].resolve())
+                return (
+                    log_text, s,
+                    gr.update(value="Research complete!"),
+                    gr.update(visible=True),                                           # workspace_row
+                    gr.update(value=f"**Workspace:** `{workspace_path}`"),             # workspace_path_md
+                    gr.update(visible=True),                                           # file_panel
+                    gr.update(active=False),                                           # stop timer
+                    gr.update(choices=choices, value=choices[0] if choices else None), # file_dropdown
+                )
+
             lines: list[str] = []
             done = False
             while not s["log_q"].empty():
@@ -372,20 +387,20 @@ def build_app() -> gr.Blocks:
                 return (
                     log_text, s,
                     gr.update(value="Research complete!"),
-                    gr.update(visible=True),                                          # workspace_row
-                    gr.update(value=f"**Workspace:** `{workspace_path}`"),            # workspace_path_md
-                    gr.update(visible=True),                                          # file_panel
-                    gr.update(active=False),                                          # stop timer
-                    gr.update(choices=choices, value=choices[0] if choices else None),# file_dropdown
+                    gr.update(visible=True),                                           # workspace_row
+                    gr.update(value=f"**Workspace:** `{workspace_path}`"),             # workspace_path_md
+                    gr.update(visible=True),                                           # file_panel
+                    gr.update(active=False),                                           # stop timer
+                    gr.update(choices=choices, value=choices[0] if choices else None), # file_dropdown
                 )
 
             return (
                 log_text, s,
                 gr.update(),
-                gr.update(visible=False), gr.update(),  # workspace_row, path_md
-                gr.update(visible=False),               # file_panel
-                gr.update(active=True),                 # keep timer running
-                gr.update(),                            # file_dropdown
+                gr.update(),  gr.update(),  # workspace_row, path_md — no-op, don't force-hide
+                gr.update(),                # file_panel — no-op, don't force-hide
+                gr.update(active=True),     # keep timer running
+                gr.update(),               # file_dropdown
             )
 
         def show_file(filename: str, s: dict) -> str:
