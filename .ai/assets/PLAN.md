@@ -6,10 +6,10 @@ A multi-agent research system inspired by [Anthropic's multi-agent research syst
 
 **Two delivery phases:**
 
-| Phase | Backend | How agents call models |
-|-------|---------|----------------------|
-| **Phase 1** (current) | API | `anthropic` and `google-genai` Python SDKs |
-| **Phase 2** | CLI | `claude` and `gemini` CLIs via `asyncio.create_subprocess_exec` |
+| Phase                 | Backend | How agents call models                                          |
+| --------------------- | ------- | --------------------------------------------------------------- |
+| **Phase 1** (current) | API     | `anthropic` and `google-genai` Python SDKs                      |
+| **Phase 2**           | CLI     | `claude` and `gemini` CLIs via `asyncio.create_subprocess_exec` |
 
 ---
 
@@ -66,9 +66,10 @@ deep-research/
 │   └── gemini_cli.py              # Phase 2 stub — Gemini CLI subprocess
 │
 └── workspace/                     # Runtime output (gitignored)
-    ├── findings/                  # One .md per subagent task
-    ├── plan.json                  # Lead's task decomposition
-    └── report.md                  # Final synthesized report
+    └── <research_id>/             # One folder per research session
+        ├── findings/              # One .md per subagent task
+        ├── plan.json              # Lead's task decomposition
+        └── report.md              # Final synthesized report
 ```
 
 ### Data Flow
@@ -82,14 +83,14 @@ deep-research/
 
 All agents share a common tool format (converted per-provider):
 
-| Tool | Parameters | Used By |
-|------|-----------|---------|
-| `read_file` | `path` (relative to workspace) | Lead, Subagents |
-| `write_file` | `path`, `content` | Lead, Subagents |
-| `list_files` | `path` | Lead |
+| Tool           | Parameters                                                   | Used By           |
+| -------------- | ------------------------------------------------------------ | ----------------- |
+| `read_file`    | `path` (relative to workspace)                               | Lead, Subagents   |
+| `write_file`   | `path`, `content`                                            | Lead, Subagents   |
+| `list_files`   | `path`                                                       | Lead              |
 | `submit_brief` | `topic`, `scope`, `questions`, `depth`, `output_preferences` | Receptionist only |
-| `create_plan` | `tasks` (JSON string) | Lead only |
-| Google Search | (native Gemini grounding) | Subagents only |
+| `create_plan`  | `tasks` (JSON string)                                        | Lead only         |
+| Google Search  | (native Gemini grounding)                                    | Subagents only    |
 
 ### Provider Abstraction
 
@@ -103,15 +104,16 @@ Each provider module exposes an `async def run(...)` function with a tool-use lo
 
 `config.py` — `Config` dataclass:
 
-| Field | Default | Purpose |
-|-------|---------|---------|
-| `backend` | `Backend.API` | `api` or `cli` |
-| `workspace` | `./workspace` | Runtime output directory |
-| `receptionist_model` | `claude-sonnet-4-20250514` | Model for intake |
-| `lead_model` | `claude-opus-4-20250514` | Model for planning + synthesis |
-| `subagent_model` | `gemini-3-flash` | Model for web research |
-| `max_subagents` | `5` | Upper limit on parallel subagents |
-| `max_tokens` | `16384` | Max output tokens per API call |
+| Field                | Default             | Purpose                                 |
+| -------------------- | ------------------- | --------------------------------------- |
+| `backend`            | `Backend.API`       | `api` or `cli`                          |
+| `workspace`          | `./workspace`       | Runtime output directory                |
+| `receptionist_model` | `claude-sonnet-4-6` | Model for intake                        |
+| `lead_model`         | `claude-opus-4-6`   | Model for planning + synthesis          |
+| `subagent_model`     | `gemini-3-flash`    | Model for web research                  |
+| `max_subagents`      | `15`                | Upper limit on parallel subagents       |
+| `timeout_seconds`    | `900`               | Timeout for each subagent research task |
+| `max_tokens`         | `16384`             | Max output tokens per API call          |
 
 ---
 

@@ -77,9 +77,12 @@ python main.py --workspace ./my-research-project
 ```
 
 ### Workspace Structure
-- `workspace/plan.json`: The Lead's decomposition of the research brief.
-- `workspace/findings/`: Individual `.md` files containing raw research from each subagent.
-- `workspace/report.md`: The final synthesized research report.
+
+Each research session is organized into a unique subfolder within the workspace directory (e.g., `workspace/my-topic-20260424-123456/`):
+
+- `.../plan.json`: The Lead's decomposition of the research brief.
+- `.../findings/`: Individual `.md` files containing raw research from each subagent.
+- `.../report.md`: The final synthesized research report.
 
 ## 📂 Examples
 
@@ -91,17 +94,17 @@ You can find sample research outputs in the `examples/` directory:
 ### Running Tests
 ```bash
 # Run all unit tests
-pytest
+uv run pytest
 
 # Run manual integration tests
-python tests/manual/test_cli_pipeline.py
-python tests/manual/test_receptionist.py
+uv run python tests/manual/test_cli_pipeline.py
+uv run python tests/manual/test_receptionist.py
 ```
 
 ### Linting & Formatting
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
 ```
 
 ## 📈 Project Status

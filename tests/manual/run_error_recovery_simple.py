@@ -11,11 +11,11 @@ from config import Config, Backend
 from agents import lead
 
 
-async def run_remediation_test():
+async def run_error_recovery_test():
     load_dotenv()
 
     # Use a specific workspace for this test
-    workspace_path = Path("./tests/workspace_test_simple")
+    workspace_path = Path("./tests/workspace")
     if workspace_path.exists():
         import shutil
 
@@ -37,10 +37,10 @@ async def run_remediation_test():
     )
 
     print("\n" + "=" * 50)
-    print("  [REMEDIATION TEST SIMPLE] STARTING CLI TEST")
+    print("  [ERROR RECOVERY TEST SIMPLE] STARTING CLI TEST")
     print("=" * 50)
 
-    print("\n--- [REMEDIATION TEST SIMPLE] Synthesizing (Remediation expected) ---")
+    print("\n--- [ERROR RECOVERY TEST SIMPLE] Synthesizing (Recovery expected) ---")
     # This will call synthesize(), which handles remediation internally
     # In CLI mode, synthesize() uses a loop to handle remediation
     try:
@@ -59,9 +59,9 @@ async def run_remediation_test():
         print(f"\nFinal report written to {report_path}")
     else:
         print(
-            "\nNOTE: report.md not found (might still be in remediation if test was cut short)"
+            "\nNOTE: report.md not found (might still be in recovery if test was cut short)"
         )
 
 
 if __name__ == "__main__":
-    asyncio.run(run_remediation_test())
+    asyncio.run(run_error_recovery_test())

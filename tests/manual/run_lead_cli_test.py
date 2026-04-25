@@ -4,9 +4,9 @@ Simulates a receptionist output by providing a hard-coded brief, then runs
 lead.plan() and lead.synthesize() end-to-end against real Gemini CLI.
 
 Usage:
-    python test_lead_cli.py          # runs both plan + synthesize
-    python test_lead_cli.py plan     # plan only
-    python test_lead_cli.py synth    # synthesize only (requires plan.json in workspace)
+    python tests/manual/run_lead_cli_test.py          # runs both plan + synthesize
+    python tests/manual/run_lead_cli_test.py plan     # plan only
+    python tests/manual/run_lead_cli_test.py synth    # synthesize only (requires plan.json in workspace)
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ BRIEF = {
 # Test workspace
 # ---------------------------------------------------------------------------
 
-WORKSPACE = Path("./workspace_lead_test")
+WORKSPACE = Path("./tests/workspace/lead")
 
 
 def _setup_workspace():
@@ -171,7 +171,7 @@ async def main():
         raise
     finally:
         print(f"\nWorkspace preserved at: {WORKSPACE.resolve()}")
-        print("Run `rm -rf workspace_lead_test` to clean up.")
+        print(f"Run `rm -rf {WORKSPACE}` to clean up.")
 
 
 if __name__ == "__main__":

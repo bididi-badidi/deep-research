@@ -151,6 +151,31 @@ def extract_json_or_raise(
     return result
 
 
+def get_safe_path(requested_path: str | Path, workspace: Path) -> Path:
+    """Resolves a path and ensures it is within the workspace root.
+
+    Args:
+        requested_path: The relative or absolute path requested by the agent.
+        workspace: The absolute path to the allowed workspace root.
+
+    Returns:
+        A resolved Path object within the workspace.
+
+    Raises:
+        PermissionError: If the path escapes the workspace.
+    """
+    ws = workspace.resolve()
+    # If path is absolute, it must be absolute *within* the workspace or relative to it
+    target = (ws / requested_path).resolve()
+
+    if not target.is_relative_to(ws):
+        raise PermissionError(
+            f"Access denied: Path '{requested_path}' escapes the workspace."
+        )
+
+    return target
+
+
 def get_provider_name(model_name: str) -> str:
     """Derive the provider name ('anthropic' or 'gemini') from the model name."""
     m = model_name.lower()

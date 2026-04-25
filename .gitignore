@@ -23,9 +23,7 @@ logs/
 # Workspace output
 workspace/
 workspace_cli/
-tests/workspace_test/
-tests/workspace_remediation_test/
-tests/workspace_test_simple/
+tests/workspace/
 breakdown.save
 
 # Editor and IDE

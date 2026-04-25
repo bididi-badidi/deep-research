@@ -27,7 +27,7 @@ async def run(config: Config, task: dict) -> str:
         else:
             hints = str(hints_list)
         prompt += f"**Suggested searches:** {hints}\n\n"
-    prompt += f"Write your findings to: findings/{id_}.md"
+    prompt += f"IMPORTANT: Write your findings to the RELATIVE path: findings/{id_}.md. Do not use absolute paths."
 
     system = load_prompt("subagent", task_id=id_)
 

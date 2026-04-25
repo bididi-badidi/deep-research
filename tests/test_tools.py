@@ -62,4 +62,4 @@ async def test_list_files(tmp_path):
 async def test_path_escape(tmp_path):
     workspace = tmp_path
     res = await execute("read_file", {"path": "../outside.txt"}, workspace)
-    assert "Error: path escapes workspace" in res
+    assert "Access denied" in res and "escapes the workspace" in res

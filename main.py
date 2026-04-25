@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -42,24 +43,58 @@ async def main() -> None:
         default=2,
         help="Max number of iterative remediation rounds (default: 2)",
     )
+    parser.add_argument(
+        "--brief",
+        type=Path,
+        help="Path to a JSON research brief to skip interactive intake.",
+    )
     args = parser.parse_args()
 
     config = Config(
         backend=Backend(args.backend),
-        workspace=args.workspace,
+        workspace=args.workspace.resolve(),
         max_remediation_rounds=args.max_remediation_rounds,
     )
-    config.workspace.mkdir(parents=True, exist_ok=True)
-    (config.workspace / "findings").mkdir(exist_ok=True)
+    config.validate()
 
     print("=" * 50)
     print("  Deep Research - Multi-Agent Research System")
     print("=" * 50)
 
     # ── 1. Receptionist: gather research brief ──────────────────────────
-    from agents import receptionist
+    if args.brief:
+        if not args.brief.exists():
+            print(f"Error: Brief file not found at {args.brief}")
+            return
+        try:
+            with open(args.brief, "r") as f:
+                brief = json.load(f)
+            print(f"\nLoaded research brief from {args.brief}")
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON brief: {e}")
+            return
+    else:
+        from agents import receptionist
 
-    brief = await receptionist.run(config)
+        brief = await receptionist.run(config)
+
+    # Generate a unique research ID based on the topic
+    import re
+    from datetime import datetime
+
+    topic_slug = re.sub(r"[^a-z0-9]+", "-", brief["topic"].lower()).strip("-")[:30]
+    if not topic_slug:
+        topic_slug = "research"
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    research_id = f"{topic_slug}-{timestamp}"
+
+    # Update workspace to task-specific folder
+    config.workspace = config.workspace / research_id
+    config.workspace.mkdir(parents=True, exist_ok=True)
+    (config.workspace / "findings").mkdir(exist_ok=True)
+
+    print(f"\nResearch session ID: {research_id}")
+    print(f"Workspace: {config.workspace}")
 
     # ── 2. Lead: plan research tasks ────────────────────────────────────
     from agents import lead
