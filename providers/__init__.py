@@ -117,7 +117,6 @@ def get_provider(backend: Backend, name: str) -> ProviderRun:
                                             function_response=genai_types.FunctionResponse(
                                                 name=name,
                                                 response={"result": item["content"]},
-                                                id=tool_id,
                                             )
                                         )
                                     )

@@ -353,6 +353,8 @@ async def synthesize(config: Config) -> str:
                 if lines and not lines[0].startswith("#") and len(lines) > 1:
                     clean_report = "\n".join(lines[1:]).strip()
 
-        report_path.write_text(clean_report)
+        clean_report = clean_report.strip()
+        if clean_report.startswith("#"):
+            report_path.write_text(clean_report)
 
     return result

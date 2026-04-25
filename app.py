@@ -207,7 +207,7 @@ def build_app() -> gr.Blocks:
             with gr.Column():
                 with gr.Row():
                     gr.Markdown("### 📂 Output Files")
-                    gr.Button("Open Workspace Folder", scale=1)
+                    open_folder_btn = gr.Button("Open Workspace Folder", scale=1)
 
                 with gr.Row():
                     file_dropdown = gr.Dropdown(
@@ -367,6 +367,9 @@ def build_app() -> gr.Blocks:
             choices = _list_workspace_files(s["workspace"])
             return gr.update(choices=choices, value=choices[0] if choices else None)
 
+        def handle_open_folder(s: dict):
+            _open_folder(s["workspace"])
+
         # ── Wire events ───────────────────────────────────────────────────
 
         send_outputs = [chatbot, user_input, state, status_md, timer]
@@ -397,6 +400,11 @@ def build_app() -> gr.Blocks:
             refresh_files,
             inputs=[state],
             outputs=[file_dropdown],
+        )
+        open_folder_btn.click(
+            handle_open_folder,
+            inputs=[state],
+            outputs=[],
         )
 
     return demo
