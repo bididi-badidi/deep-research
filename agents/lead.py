@@ -356,4 +356,3 @@ async def synthesize(config: Config) -> str:
         report_path.write_text(clean_report)
 
     return result
-
