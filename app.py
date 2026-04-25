@@ -31,10 +31,14 @@ WORKSPACE = Path(__file__).parent / "workspace"
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
+_ROOT_FILES = {"report.md", "brief.json", "synthesis_raw.md"}
+
+
 def _list_workspace_files(workspace: Path) -> list[str]:
     files: list[str] = []
-    if (workspace / "report.md").exists():
-        files.append("report.md")
+    for name in ("brief.json", "report.md", "synthesis_raw.md"):
+        if (workspace / name).exists():
+            files.append(name)
     findings = workspace / "findings"
     if findings.exists():
         files += sorted(f.name for f in findings.glob("*.md"))
@@ -44,8 +48,10 @@ def _list_workspace_files(workspace: Path) -> list[str]:
 def _read_file(filename: str, workspace: Path) -> str:
     if not filename:
         return ""
-    path = workspace / (
-        "report.md" if filename == "report.md" else f"findings/{filename}"
+    path = (
+        workspace / filename
+        if filename in _ROOT_FILES
+        else workspace / f"findings/{filename}"
     )
     return (
         path.read_text(encoding="utf-8")
@@ -96,7 +102,16 @@ async def _run_pipeline_queued(
     except Exception as exc:
         log_q.put_nowait(f"Pipeline error: {exc}")
     finally:
-        log_q.put_nowait("__DONE__")
+        # Guarantee __DONE__ is delivered even if the queue is nearly full.
+        try:
+            log_q.put_nowait("__DONE__")
+        except asyncio.QueueFull:
+            # Drain one slot then retry.
+            try:
+                log_q.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
+            log_q.put_nowait("__DONE__")
 
 
 # ── State factory ─────────────────────────────────────────────────────────────
@@ -202,13 +217,19 @@ def build_app() -> gr.Blocks:
                     autoscroll=True,
                 )
 
+        # ── Workspace access row (hidden until pipeline finishes) ─────────
+        with gr.Row(visible=False) as workspace_row:
+            with gr.Column(elem_classes="glass-card"):
+                with gr.Row():
+                    workspace_path_md = gr.Markdown("", container=False, scale=5)
+                    open_folder_btn = gr.Button(
+                        "📁 Open Workspace Folder", scale=1, variant="primary"
+                    )
+
         # ── Bottom: file viewer (hidden until done) ───────────────────────
         with gr.Row(visible=False, elem_classes="glass-card") as file_panel:
             with gr.Column():
-                with gr.Row():
-                    gr.Markdown("### 📂 Output Files")
-                    open_folder_btn = gr.Button("Open Workspace Folder", scale=1)
-
+                gr.Markdown("### 📂 Output Files")
                 with gr.Row():
                     file_dropdown = gr.Dropdown(
                         label="Select file",
@@ -263,6 +284,8 @@ def build_app() -> gr.Blocks:
                 s["phase"] = "intake"
 
                 async def _on_brief(brief: dict) -> None:
+                    import json as _json
+
                     s["brief"] = brief
                     s["phase"] = "researching"
 
@@ -270,9 +293,12 @@ def build_app() -> gr.Blocks:
                     from utils import initialize_research_workspace
 
                     research_id = initialize_research_workspace(config, brief["topic"])
-                    s["workspace"] = (
-                        config.workspace
-                    )  # Update state workspace for file viewer
+                    s["workspace"] = config.workspace  # research-specific path
+
+                    # Persist the brief for documentation
+                    (config.workspace / "brief.json").write_text(
+                        _json.dumps(brief, indent=2, ensure_ascii=False)
+                    )
 
                     log_q.put_nowait(f"Brief received: {brief['topic']}")
                     log_q.put_nowait(f"Research session ID: {research_id}")
@@ -316,15 +342,15 @@ def build_app() -> gr.Blocks:
             )
 
         async def poll_updates(s: dict, log_text: str):
-            """Drain log_q into the log textbox; reveal file panel when done."""
+            """Drain log_q into the log textbox; reveal panels when done."""
             if s.get("log_q") is None:
                 return (
-                    log_text,
-                    s,
+                    log_text, s,
                     gr.update(),
-                    gr.update(visible=False),
-                    gr.update(active=False),
-                    gr.update(),
+                    gr.update(visible=False), gr.update(),  # workspace_row, path_md
+                    gr.update(visible=False),               # file_panel
+                    gr.update(active=False),                # timer
+                    gr.update(),                            # file_dropdown
                 )
 
             lines: list[str] = []
@@ -342,22 +368,24 @@ def build_app() -> gr.Blocks:
 
             if done:
                 choices = _list_workspace_files(s["workspace"])
+                workspace_path = str(s["workspace"].resolve())
                 return (
-                    log_text,
-                    s,
+                    log_text, s,
                     gr.update(value="Research complete!"),
-                    gr.update(visible=True),
-                    gr.update(active=False),  # stop timer
-                    gr.update(choices=choices, value=choices[0] if choices else None),
+                    gr.update(visible=True),                                          # workspace_row
+                    gr.update(value=f"**Workspace:** `{workspace_path}`"),            # workspace_path_md
+                    gr.update(visible=True),                                          # file_panel
+                    gr.update(active=False),                                          # stop timer
+                    gr.update(choices=choices, value=choices[0] if choices else None),# file_dropdown
                 )
 
             return (
-                log_text,
-                s,
+                log_text, s,
                 gr.update(),
-                gr.update(visible=False),
-                gr.update(active=True),
-                gr.update(),
+                gr.update(visible=False), gr.update(),  # workspace_row, path_md
+                gr.update(visible=False),               # file_panel
+                gr.update(active=True),                 # keep timer running
+                gr.update(),                            # file_dropdown
             )
 
         def show_file(filename: str, s: dict) -> str:
@@ -388,7 +416,11 @@ def build_app() -> gr.Blocks:
         timer.tick(
             poll_updates,
             inputs=[state, log_box],
-            outputs=[log_box, state, status_md, file_panel, timer, file_dropdown],
+            outputs=[
+                log_box, state, status_md,
+                workspace_row, workspace_path_md,
+                file_panel, timer, file_dropdown,
+            ],
         )
 
         file_dropdown.change(
