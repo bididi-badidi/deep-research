@@ -104,16 +104,16 @@ Each provider module exposes an `async def run(...)` function with a tool-use lo
 
 `config.py` — `Config` dataclass:
 
-| Field                | Default                    | Purpose                                 |
-| -------------------- | -------------------------- | --------------------------------------- |
-| `backend`            | `Backend.API`              | `api` or `cli`                          |
-| `workspace`          | `./workspace`              | Runtime output directory                |
-| `receptionist_model` | `claude-sonnet-4-20250514` | Model for intake                        |
-| `lead_model`         | `claude-opus-4-20250514`   | Model for planning + synthesis          |
-| `subagent_model`     | `gemini-3-flash`           | Model for web research                  |
-| `max_subagents`      | `15`                       | Upper limit on parallel subagents       |
-| `timeout_seconds`    | `900`                      | Timeout for each subagent research task |
-| `max_tokens`         | `16384`                    | Max output tokens per API call          |
+| Field                | Default             | Purpose                                 |
+| -------------------- | ------------------- | --------------------------------------- |
+| `backend`            | `Backend.API`       | `api` or `cli`                          |
+| `workspace`          | `./workspace`       | Runtime output directory                |
+| `receptionist_model` | `claude-sonnet-4-6` | Model for intake                        |
+| `lead_model`         | `claude-opus-4-6`   | Model for planning + synthesis          |
+| `subagent_model`     | `gemini-3-flash`    | Model for web research                  |
+| `max_subagents`      | `15`                | Upper limit on parallel subagents       |
+| `timeout_seconds`    | `900`               | Timeout for each subagent research task |
+| `max_tokens`         | `16384`             | Max output tokens per API call          |
 
 ---
 
