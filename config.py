@@ -11,6 +11,16 @@ class Backend(Enum):
     CLI = "cli"
 
 
+def _get_env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(f"Environment variable {name} must be an integer, got '{raw}'")
+
+
 @dataclass
 class Config:
     backend: Backend = Backend.API
@@ -24,16 +34,16 @@ class Config:
 
     # Limits
     max_subagents: int = field(
-        default_factory=lambda: int(os.getenv("MAX_SUBAGENTS", "15"))
+        default_factory=lambda: _get_env_int("MAX_SUBAGENTS", 15)
     )
     max_tokens: int = field(
-        default_factory=lambda: int(os.getenv("MAX_TOKENS", "16384"))
+        default_factory=lambda: _get_env_int("MAX_TOKENS", 16384)
     )
     max_remediation_rounds: int = field(
-        default_factory=lambda: int(os.getenv("MAX_REMEDIATION_ROUNDS", "5"))
+        default_factory=lambda: _get_env_int("MAX_REMEDIATION_ROUNDS", 5)
     )
     timeout_seconds: int = field(
-        default_factory=lambda: int(os.getenv("TIMEOUT_SECONDS", "900"))
+        default_factory=lambda: _get_env_int("TIMEOUT_SECONDS", 900)
     )
 
     verbose: bool = field(

@@ -94,17 +94,17 @@ You can find sample research outputs in the `examples/` directory:
 ### Running Tests
 ```bash
 # Run all unit tests
-pytest
+uv run pytest
 
 # Run manual integration tests
-python tests/manual/test_cli_pipeline.py
-python tests/manual/test_receptionist.py
+uv run python tests/manual/test_cli_pipeline.py
+uv run python tests/manual/test_receptionist.py
 ```
 
 ### Linting & Formatting
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
 ```
 
 ## 📈 Project Status

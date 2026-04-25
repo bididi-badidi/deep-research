@@ -15,3 +15,11 @@ def test_config_overrides():
     cfg = Config(backend=Backend.CLI, workspace=Path("/tmp/ws"))
     assert cfg.backend == Backend.CLI
     assert cfg.workspace == Path("/tmp/ws")
+
+
+def test_config_invalid_env_vars(monkeypatch):
+    monkeypatch.setenv("MAX_TOKENS", "invalid")
+    import pytest
+
+    with pytest.raises(ValueError, match="Environment variable MAX_TOKENS must be an integer"):
+        Config()
