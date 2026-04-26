@@ -336,19 +336,21 @@ async def synthesize(config: Config) -> str:
             # Termination: no remediation JSON found.
             break
 
-    # Persist report
-    report_path = config.workspace / "report.md"
+    # Always persist the raw synthesis output for auditability.
     if result:
-        # Strip potential markdown code blocks
+        (config.workspace / "synthesis_raw.md").write_text(result)
+
+    # Fallback: if the agent did not call write_file to produce report.md,
+    # attempt to save a cleaned version of the raw output as report.md.
+    report_path = config.workspace / "report.md"
+    if result and not report_path.exists():
         clean_report = result
         if "```markdown" in clean_report:
             clean_report = clean_report.split("```markdown")[1].split("```")[0].strip()
         elif clean_report.startswith("```"):
-            # Check if it looks like a code block starting at the beginning
             parts = clean_report.split("```")
             if len(parts) >= 3:
                 clean_report = parts[1].strip()
-                # If first line is a language identifier, strip it
                 lines = clean_report.split("\n")
                 if lines and not lines[0].startswith("#") and len(lines) > 1:
                     clean_report = "\n".join(lines[1:]).strip()
