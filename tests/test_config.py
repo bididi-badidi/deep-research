@@ -1,6 +1,7 @@
 import pytest
 from pathlib import Path
 from config import Config, Backend
+from main import build_config
 
 
 @pytest.fixture(autouse=True)
@@ -9,6 +10,8 @@ def clear_env(monkeypatch):
     monkeypatch.delenv("RECEPTIONIST_MODEL", raising=False)
     monkeypatch.delenv("LEAD_MODEL", raising=False)
     monkeypatch.delenv("SUBAGENT_MODEL", raising=False)
+    monkeypatch.delenv("CITATION_MODEL", raising=False)
+    monkeypatch.delenv("VERIFY_URLS", raising=False)
     monkeypatch.delenv("WORKSPACE", raising=False)
     monkeypatch.delenv("MAX_SUBAGENTS", raising=False)
     monkeypatch.delenv("MAX_TOKENS", raising=False)
@@ -24,6 +27,8 @@ def test_config_defaults():
     assert "sonnet" in cfg.receptionist_model.lower()
     assert any(m in cfg.lead_model.lower() for m in ["sonnet", "opus", "pro"])
     assert any(m in cfg.subagent_model.lower() for m in ["sonnet", "flash", "pro"])
+    assert "claude-sonnet" in cfg.citation_model
+    assert cfg.verify_urls is True
 
 
 def test_config_overrides():
@@ -49,6 +54,55 @@ def test_config_invalid_env_vars(monkeypatch):
         ValueError, match="Environment variable MAX_TOKENS must be an integer"
     ):
         Config()
+
+    monkeypatch.delenv("MAX_TOKENS", raising=False)
+    monkeypatch.setenv("VERIFY_URLS", "maybe")
+    with pytest.raises(
+        ValueError, match="Environment variable VERIFY_URLS must be a boolean"
+    ):
+        Config()
+
+
+def test_config_verify_urls_env(monkeypatch):
+    monkeypatch.setenv("VERIFY_URLS", "false")
+    cfg = Config()
+    assert cfg.verify_urls is False
+
+
+def test_cli_config_preserves_verify_urls_env(monkeypatch):
+    monkeypatch.setenv("VERIFY_URLS", "false")
+    args = type(
+        "Args",
+        (),
+        {
+            "backend": "api",
+            "workspace": Path("."),
+            "max_remediation_rounds": 2,
+            "no_verify_urls": False,
+        },
+    )()
+
+    cfg = build_config(args)
+
+    assert cfg.verify_urls is False
+
+
+def test_cli_no_verify_urls_overrides_env(monkeypatch):
+    monkeypatch.setenv("VERIFY_URLS", "true")
+    args = type(
+        "Args",
+        (),
+        {
+            "backend": "api",
+            "workspace": Path("."),
+            "max_remediation_rounds": 2,
+            "no_verify_urls": True,
+        },
+    )()
+
+    cfg = build_config(args)
+
+    assert cfg.verify_urls is False
 
 
 def test_config_backend_defaults():
@@ -89,3 +143,14 @@ def test_config_validation_api_keys(monkeypatch):
     monkeypatch.setenv("GOOGLE_API_KEY", "gt-test")
     # Now it should pass
     cfg.validate()
+
+
+def test_config_validation_requires_citation_api_key_in_cli(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+
+    cfg = Config(backend=Backend.CLI)
+
+    with pytest.raises(ValueError, match="ANTHROPIC_API_KEY is required"):
+        cfg.validate()

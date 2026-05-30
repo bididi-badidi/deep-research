@@ -19,10 +19,23 @@ from dotenv import load_dotenv
 from config import Backend, Config
 
 
+def build_config(args: argparse.Namespace) -> Config:
+    """Build Config from parsed CLI args while preserving env-backed defaults."""
+    config_kwargs = {
+        "backend": Backend(args.backend),
+        "workspace": args.workspace.resolve(),
+        "max_remediation_rounds": args.max_remediation_rounds,
+    }
+    if args.no_verify_urls:
+        config_kwargs["verify_urls"] = False
+    return Config(**config_kwargs)
+
+
 async def run_pipeline(
     config: Config,
     brief: dict,
     on_log=None,
+    skip_citation: bool = False,
 ) -> None:
     """Execute the full research pipeline after the brief is gathered.
 
@@ -31,6 +44,7 @@ async def run_pipeline(
         brief:   Research brief dict produced by the receptionist.
         on_log:  Optional callable(str) invoked for each log line.
                  Defaults to ``print`` so CLI usage is unchanged.
+        skip_citation: Skip final citation verification/formatting.
     """
     log = on_log or print
 
@@ -60,6 +74,14 @@ async def run_pipeline(
     # ── 4. Lead: synthesize findings into final report ──────────────────
     log("\n--- Synthesizing findings (may trigger remediation rounds) ---")
     await lead.synthesize(config)
+
+    # ── 5. Citation Agent: verify URLs and format citations ─────────────
+    if not skip_citation:
+        log("\n--- Running Citation Agent ---")
+        from agents import citation
+
+        await citation.run(config, brief)
+        log(f"Citations verified. Final report: {config.workspace / 'report.md'}")
 
     report_path = config.workspace / "report.md"
     if report_path.exists():
@@ -98,13 +120,19 @@ async def main() -> None:
         type=Path,
         help="Path to a JSON research brief to skip interactive intake.",
     )
+    parser.add_argument(
+        "--skip-citation",
+        action="store_true",
+        help="Skip the Citation Agent post-processing step.",
+    )
+    parser.add_argument(
+        "--no-verify-urls",
+        action="store_true",
+        help="Run the Citation Agent without making network requests to verify URLs.",
+    )
     args = parser.parse_args()
 
-    config = Config(
-        backend=Backend(args.backend),
-        workspace=args.workspace.resolve(),
-        max_remediation_rounds=args.max_remediation_rounds,
-    )
+    config = build_config(args)
     config.validate()
 
     print("=" * 50)
@@ -136,7 +164,7 @@ async def main() -> None:
     print(f"\nResearch session ID: {research_id}")
     print(f"Workspace: {config.workspace}")
 
-    await run_pipeline(config, brief)
+    await run_pipeline(config, brief, skip_citation=args.skip_citation)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,18 @@ def _get_env_int(name: str, default: int) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got '{raw}'")
 
 
+def _get_env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"Environment variable {name} must be a boolean, got '{raw}'")
+
+
 @dataclass
 class Config:
     backend: Backend = Backend.API
@@ -31,6 +43,8 @@ class Config:
     receptionist_model: str | None = None
     lead_model: str | None = None
     subagent_model: str | None = None
+    citation_model: str | None = None
+    verify_urls: bool = field(default_factory=lambda: _get_env_bool("VERIFY_URLS", True))
 
     # Limits
     max_subagents: int = field(
@@ -73,6 +87,11 @@ class Config:
         if self.subagent_model is None:
             self.subagent_model = os.getenv("SUBAGENT_MODEL", "gemini-3-flash-preview")
 
+        # 4. Resolve Citation Model. The citation agent intentionally uses the
+        # Anthropic API provider even when the research backend is CLI.
+        if self.citation_model is None:
+            self.citation_model = os.getenv("CITATION_MODEL", "claude-sonnet-4-6")
+
     def validate(self) -> None:
         """Validate configuration constraints and required environment variables."""
         if self.max_subagents <= 0:
@@ -82,11 +101,13 @@ class Config:
         if self.timeout_seconds <= 0:
             raise ValueError(f"timeout_seconds must be > 0, got {self.timeout_seconds}")
 
-        if self.backend == Backend.API:
-            # Check for API keys based on provider requirements
-            from utils import get_provider_name
+        from utils import get_provider_name
 
-            required_providers = set()
+        required_providers = set()
+        if self.citation_model:
+            required_providers.add(get_provider_name(self.citation_model))
+
+        if self.backend == Backend.API:
             for model in [
                 self.receptionist_model,
                 self.lead_model,
@@ -95,12 +116,12 @@ class Config:
                 if model:
                     required_providers.add(get_provider_name(model))
 
-            if "anthropic" in required_providers and not os.getenv("ANTHROPIC_API_KEY"):
+        if "anthropic" in required_providers and not os.getenv("ANTHROPIC_API_KEY"):
+            raise ValueError(
+                "ANTHROPIC_API_KEY is required for Anthropic models used by the API-backed citation agent"
+            )
+        if "gemini" in required_providers:
+            if not os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
                 raise ValueError(
-                    "ANTHROPIC_API_KEY is required for Anthropic models in API mode"
+                    "GOOGLE_API_KEY or GEMINI_API_KEY is required for Gemini models in API mode"
                 )
-            if "gemini" in required_providers:
-                if not os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
-                    raise ValueError(
-                        "GOOGLE_API_KEY or GEMINI_API_KEY is required for Gemini models in API mode"
-                    )

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
+
+import httpx
 
 from utils import get_safe_path
 
@@ -77,12 +80,28 @@ READ_REFERENCE_TOOL = {
     "required": ["filename"],
 }
 
+VERIFY_URL_TOOL = {
+    "name": "verify_url",
+    "description": (
+        "Check whether a URL is reachable. Returns status code and redirect URL "
+        "if applicable."
+    ),
+    "parameters": {
+        "url": {
+            "type": "string",
+            "description": "The URL to verify.",
+        },
+    },
+    "required": ["url"],
+}
+
 FILE_TOOLS: list[dict] = [
     READ_FILE_TOOL,
     WRITE_FILE_TOOL,
     LIST_FILES_TOOL,
     LIST_REFERENCES_TOOL,
     READ_REFERENCE_TOOL,
+    VERIFY_URL_TOOL,
 ]
 
 TOOL_PROFILES: dict[str, list[dict]] = {
@@ -112,6 +131,9 @@ async def execute(name: str, args: dict, workspace: Path) -> str:
     """Execute a filesystem tool within the sandboxed workspace."""
     ws = workspace.resolve()
     try:
+        if name == "verify_url":
+            return await _verify_url(args["url"])
+
         if name == "read_file":
             target = get_safe_path(args["path"], ws)
             return await asyncio.to_thread(target.read_text)
@@ -165,3 +187,25 @@ async def execute(name: str, args: dict, workspace: Path) -> str:
         return f"Error: unknown tool '{name}'"
     except Exception as e:
         return f"Error: {e}"
+
+
+async def _verify_url(url: str) -> str:
+    """Verify a URL using HEAD with a GET fallback for servers that reject HEAD."""
+    result: dict[str, object] = {"url": url}
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=10.0) as client:
+            response = await client.head(url)
+            if response.status_code == 405:
+                response = await client.get(url)
+
+        result.update(
+            {
+                "status": response.status_code,
+                "reachable": 200 <= response.status_code < 400,
+                "final_url": str(response.url),
+            }
+        )
+    except httpx.HTTPError as e:
+        result.update({"reachable": False, "error": str(e)})
+
+    return json.dumps(result)

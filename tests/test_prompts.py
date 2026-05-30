@@ -41,6 +41,9 @@ def test_injection():
         "Found synthesis-formats, citation-formats, and source-evaluation-guide references."
     )
 
+    citation_prompt = load_prompt("citation", citation_format="APA")
+    assert "[⚠ URL unverified]" in citation_prompt
+
     print("\nAll injection tests passed!")
 
 
