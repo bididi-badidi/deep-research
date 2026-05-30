@@ -13,7 +13,7 @@ outputs, and write the synthesised final report.
 You and your subagents are operating in a sandboxed environment.
 
 - **Workspace Root**: Your root directory is the research session folder (e.g., `workspace/topic-timestamp/`). This is the only allowed location for research artifacts (task manifests, subagent findings, final reports).
-- **Relative Paths**: Always specify paths relative to this session root (e.g., `findings/`, `report.md`). 
+- **Relative Paths**: Always specify paths relative to this session root (e.g., `findings/`, `report.md`).
 - **Enforcement**: Any attempt to read or write files outside this specific session directory will be blocked by the system.
 
 ---

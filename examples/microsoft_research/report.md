@@ -1,8 +1,8 @@
 # Research Report: Microsoft’s AI Transformation and Financial Performance (April 2023 – March 2026)
 
-**Brief ID:** MSFT-AI-2026-SYNTHESIS  
-**Date:** April 23, 2026  
-**Audience:** Institutional Investors, Technology Analysts, and Strategic Stakeholders  
+**Brief ID:** MSFT-AI-2026-SYNTHESIS
+**Date:** April 23, 2026
+**Audience:** Institutional Investors, Technology Analysts, and Strategic Stakeholders
 
 ---
 
@@ -40,7 +40,7 @@ Microsoft’s financial baseline shows a consistent upward trajectory in revenue
 | **FY25 Q4** | June 30, 2025 | 76.47 | 34.33 | 3.65 |
 | **FY26 Q2** | Dec 31, 2025 | 81.30 | 38.30 | 5.16* |
 
-*\*Note: FY26 Q2 GAAP EPS includes a $7.6B gain from OpenAI investment valuation. Non-GAAP EPS was $4.14.*  
+*\*Note: FY26 Q2 GAAP EPS includes a $7.6B gain from OpenAI investment valuation. Non-GAAP EPS was $4.14.*
 (Source: Microsoft Corp., *SEC Forms 10-K and 10-Q*, 2023-2026)
 
 **Key Drivers:**
@@ -53,7 +53,7 @@ Microsoft’s financial baseline shows a consistent upward trajectory in revenue
 ## 5. Segment Analysis
 
 ### 5.1 Intelligent Cloud: The AI Engine
-The Intelligent Cloud segment revenue rose from $24.0B in mid-2023 to $32.9B by December 2025. Azure’s growth accelerated from 27% (FY23 Q4) to a peak of 39% (FY26 Q2) (Source: Microsoft, *FY26 Q2 Earnings Transcript*). 
+The Intelligent Cloud segment revenue rose from $24.0B in mid-2023 to $32.9B by December 2025. Azure’s growth accelerated from 27% (FY23 Q4) to a peak of 39% (FY26 Q2) (Source: Microsoft, *FY26 Q2 Earnings Transcript*).
 - **Azure OpenAI Service:** Adoption surged from 11,000 customers in 2023 to over 230,000 by late 2025 (Source: *Azure OpenAI Statistics 2026*).
 - **RPO Backlog:** By January 2026, OpenAI-related commitments accounted for 45% of Azure’s $625B Remaining Performance Obligation (Source: *Windows Central*, 2026).
 
