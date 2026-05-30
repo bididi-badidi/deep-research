@@ -21,6 +21,18 @@ def _get_env_int(name: str, default: int) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got '{raw}'")
 
 
+def _get_env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"Environment variable {name} must be a boolean, got '{raw}'")
+
+
 @dataclass
 class Config:
     backend: Backend = Backend.API
@@ -31,6 +43,8 @@ class Config:
     receptionist_model: str | None = None
     lead_model: str | None = None
     subagent_model: str | None = None
+    citation_model: str | None = None
+    verify_urls: bool = field(default_factory=lambda: _get_env_bool("VERIFY_URLS", True))
 
     # Limits
     max_subagents: int = field(
@@ -72,6 +86,11 @@ class Config:
         # 3. Resolve Subagent Model
         if self.subagent_model is None:
             self.subagent_model = os.getenv("SUBAGENT_MODEL", "gemini-3-flash-preview")
+
+        # 4. Resolve Citation Model. The citation agent intentionally uses the
+        # Anthropic API provider even when the research backend is CLI.
+        if self.citation_model is None:
+            self.citation_model = os.getenv("CITATION_MODEL", "claude-sonnet-4-6")
 
     def validate(self) -> None:
         """Validate configuration constraints and required environment variables."""

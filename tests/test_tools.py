@@ -5,8 +5,9 @@ from tools import execute, get_tools_for_profile, list_tool_profiles
 def test_get_tools_for_profile():
     # Full profile
     full = get_tools_for_profile("full")
-    assert len(full) == 5
+    assert len(full) == 6
     assert any(t["name"] == "write_file" for t in full)
+    assert any(t["name"] == "verify_url" for t in full)
 
     # Read-only profile
     ro = get_tools_for_profile("read_only")
@@ -20,7 +21,7 @@ def test_get_tools_for_profile():
 
     # Default to full
     unknown = get_tools_for_profile("invalid-profile")
-    assert len(unknown) == 5
+    assert len(unknown) == 6
 
 
 def test_list_tool_profiles():
@@ -63,3 +64,45 @@ async def test_path_escape(tmp_path):
     workspace = tmp_path
     res = await execute("read_file", {"path": "../outside.txt"}, workspace)
     assert "Access denied" in res and "escapes the workspace" in res
+
+
+class _FakeResponse:
+    def __init__(self, status_code, url="https://example.com/final"):
+        self.status_code = status_code
+        self.url = url
+
+
+class _FakeAsyncClient:
+    def __init__(self, *args, **kwargs):
+        self.head_calls = 0
+        self.get_calls = 0
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return None
+
+    async def head(self, url):
+        self.head_calls += 1
+        return _FakeResponse(405, url)
+
+    async def get(self, url):
+        self.get_calls += 1
+        return _FakeResponse(200, "https://example.com/final")
+
+
+@pytest.mark.asyncio
+async def test_verify_url_head_with_get_fallback(tmp_path, monkeypatch):
+    import json
+    import tools
+
+    monkeypatch.setattr(tools.httpx, "AsyncClient", _FakeAsyncClient)
+
+    res = await execute("verify_url", {"url": "https://example.com"}, tmp_path)
+    data = json.loads(res)
+
+    assert data["url"] == "https://example.com"
+    assert data["status"] == 200
+    assert data["reachable"] is True
+    assert data["final_url"] == "https://example.com/final"

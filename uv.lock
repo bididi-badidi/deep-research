@@ -423,6 +423,7 @@ dependencies = [
     { name = "anthropic" },
     { name = "google-genai" },
     { name = "gradio" },
+    { name = "httpx" },
     { name = "python-dotenv" },
 ]
 
@@ -438,6 +439,7 @@ requires-dist = [
     { name = "anthropic", specifier = ">=0.52.0" },
     { name = "google-genai", specifier = ">=1.0.0" },
     { name = "gradio", specifier = ">=6.13.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
 ]
 
