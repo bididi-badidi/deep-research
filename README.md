@@ -66,6 +66,21 @@ uv sync
 pip install -e .
 ```
 
+### Development Setup
+
+Install the development dependencies and enable the local pre-commit hooks:
+
+```bash
+uv sync --group dev
+uv run pre-commit install
+```
+
+The pre-commit suite checks trailing whitespace, end-of-file consistency, large files, Ruff linting and formatting, secrets, and the test suite. Run the full suite manually with:
+
+```bash
+uv run pre-commit run --all-files
+```
+
 ## 📖 Usage
 
 ### Command Line
