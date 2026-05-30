@@ -73,6 +73,12 @@ class _FakeResponse:
 
 
 class _FakeAsyncClient:
+    head_status = 405
+    head_url = "https://example.com"
+    get_status = 200
+    get_url = "https://example.com/final"
+    error = None
+
     def __init__(self, *args, **kwargs):
         self.head_calls = 0
         self.get_calls = 0
@@ -85,11 +91,49 @@ class _FakeAsyncClient:
 
     async def head(self, url):
         self.head_calls += 1
-        return _FakeResponse(405, url)
+        if self.error:
+            raise self.error
+        return _FakeResponse(self.head_status, self.head_url)
 
     async def get(self, url):
         self.get_calls += 1
-        return _FakeResponse(200, "https://example.com/final")
+        return _FakeResponse(self.get_status, self.get_url)
+
+
+def _patch_fake_httpx(monkeypatch, tools, fake_client):
+    instances = []
+
+    def factory(*args, **kwargs):
+        client = fake_client(*args, **kwargs)
+        instances.append(client)
+        return client
+
+    monkeypatch.setattr(tools.httpx, "AsyncClient", factory)
+    return instances
+
+
+@pytest.mark.asyncio
+async def test_verify_url_head_200(tmp_path, monkeypatch):
+    import json
+    import tools
+
+    class FakeClient(_FakeAsyncClient):
+        head_status = 200
+        head_url = "https://example.com"
+
+    instances = _patch_fake_httpx(monkeypatch, tools, FakeClient)
+
+    res = await execute("verify_url", {"url": "https://example.com"}, tmp_path)
+    data = json.loads(res)
+
+    assert data == {
+        "url": "https://example.com",
+        "status": 200,
+        "reachable": True,
+        "final_url": "https://example.com",
+    }
+    assert instances[0].head_calls == 1
+    assert instances[0].get_calls == 0
 
 
 @pytest.mark.asyncio
@@ -97,7 +141,7 @@ async def test_verify_url_head_with_get_fallback(tmp_path, monkeypatch):
     import json
     import tools
 
-    monkeypatch.setattr(tools.httpx, "AsyncClient", _FakeAsyncClient)
+    instances = _patch_fake_httpx(monkeypatch, tools, _FakeAsyncClient)
 
     res = await execute("verify_url", {"url": "https://example.com"}, tmp_path)
     data = json.loads(res)
@@ -106,3 +150,64 @@ async def test_verify_url_head_with_get_fallback(tmp_path, monkeypatch):
     assert data["status"] == 200
     assert data["reachable"] is True
     assert data["final_url"] == "https://example.com/final"
+    assert instances[0].head_calls == 1
+    assert instances[0].get_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_verify_url_head_404(tmp_path, monkeypatch):
+    import json
+    import tools
+
+    class FakeClient(_FakeAsyncClient):
+        head_status = 404
+        head_url = "https://example.com/missing"
+
+    instances = _patch_fake_httpx(monkeypatch, tools, FakeClient)
+
+    res = await execute("verify_url", {"url": "https://example.com/missing"}, tmp_path)
+    data = json.loads(res)
+
+    assert data["url"] == "https://example.com/missing"
+    assert data["status"] == 404
+    assert data["reachable"] is False
+    assert data["final_url"] == "https://example.com/missing"
+    assert instances[0].get_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_verify_url_redirect(tmp_path, monkeypatch):
+    import json
+    import tools
+
+    class FakeClient(_FakeAsyncClient):
+        head_status = 200
+        head_url = "https://example.com/final"
+
+    _patch_fake_httpx(monkeypatch, tools, FakeClient)
+
+    res = await execute("verify_url", {"url": "https://example.com/start"}, tmp_path)
+    data = json.loads(res)
+
+    assert data["url"] == "https://example.com/start"
+    assert data["status"] == 200
+    assert data["reachable"] is True
+    assert data["final_url"] == "https://example.com/final"
+
+
+@pytest.mark.asyncio
+async def test_verify_url_connection_error(tmp_path, monkeypatch):
+    import json
+    import tools
+
+    class FakeClient(_FakeAsyncClient):
+        error = tools.httpx.ConnectError("connection failed")
+
+    _patch_fake_httpx(monkeypatch, tools, FakeClient)
+
+    res = await execute("verify_url", {"url": "https://example.com"}, tmp_path)
+    data = json.loads(res)
+
+    assert data["url"] == "https://example.com"
+    assert data["reachable"] is False
+    assert "connection failed" in data["error"]

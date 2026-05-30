@@ -101,11 +101,13 @@ class Config:
         if self.timeout_seconds <= 0:
             raise ValueError(f"timeout_seconds must be > 0, got {self.timeout_seconds}")
 
-        if self.backend == Backend.API:
-            # Check for API keys based on provider requirements
-            from utils import get_provider_name
+        from utils import get_provider_name
 
-            required_providers = set()
+        required_providers = set()
+        if self.citation_model:
+            required_providers.add(get_provider_name(self.citation_model))
+
+        if self.backend == Backend.API:
             for model in [
                 self.receptionist_model,
                 self.lead_model,
@@ -114,12 +116,12 @@ class Config:
                 if model:
                     required_providers.add(get_provider_name(model))
 
-            if "anthropic" in required_providers and not os.getenv("ANTHROPIC_API_KEY"):
+        if "anthropic" in required_providers and not os.getenv("ANTHROPIC_API_KEY"):
+            raise ValueError(
+                "ANTHROPIC_API_KEY is required for Anthropic models used by the API-backed citation agent"
+            )
+        if "gemini" in required_providers:
+            if not os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
                 raise ValueError(
-                    "ANTHROPIC_API_KEY is required for Anthropic models in API mode"
+                    "GOOGLE_API_KEY or GEMINI_API_KEY is required for Gemini models in API mode"
                 )
-            if "gemini" in required_providers:
-                if not os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
-                    raise ValueError(
-                        "GOOGLE_API_KEY or GEMINI_API_KEY is required for Gemini models in API mode"
-                    )

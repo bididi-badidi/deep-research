@@ -19,6 +19,18 @@ from dotenv import load_dotenv
 from config import Backend, Config
 
 
+def build_config(args: argparse.Namespace) -> Config:
+    """Build Config from parsed CLI args while preserving env-backed defaults."""
+    config_kwargs = {
+        "backend": Backend(args.backend),
+        "workspace": args.workspace.resolve(),
+        "max_remediation_rounds": args.max_remediation_rounds,
+    }
+    if args.no_verify_urls:
+        config_kwargs["verify_urls"] = False
+    return Config(**config_kwargs)
+
+
 async def run_pipeline(
     config: Config,
     brief: dict,
@@ -120,12 +132,7 @@ async def main() -> None:
     )
     args = parser.parse_args()
 
-    config = Config(
-        backend=Backend(args.backend),
-        workspace=args.workspace.resolve(),
-        max_remediation_rounds=args.max_remediation_rounds,
-        verify_urls=not args.no_verify_urls,
-    )
+    config = build_config(args)
     config.validate()
 
     print("=" * 50)
